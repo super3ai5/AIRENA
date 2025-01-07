@@ -1,7 +1,7 @@
 
-# **AIpfs: The Autonomous On-chain  Agent Network**
+# **AIpfs: The Autonomous On-chain Agent Network**
 
-Welcome to AIpfs, a modular network for generating and managing autonomous AI agents **fully** built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
+Welcome to AIpfs, a modular network for generating and managing autonomous AI agents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
 
 🔍  On-Chain Real-Time Transparency
 
@@ -314,7 +314,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 
 ---
 
-## **Advantages Over Comparable Frameworks**
+## **Advantages**
 
 | **Feature** | **AIpfs Network** |
 | --- | --- |
@@ -336,15 +336,3 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
     - zk-SNARKs for private interaction logs.
 4. **Improved Scalability**
     - Layer 2 caching for IPFS and Glitter Protocol interactions.
-
----
-
-## **Contributing**
-
-We welcome contributions! Please see our [CONTRIBUTING.md] for guidelines.
-
----
-
-## **License**
-
-This project is licensed under the MIT License. See the [LICENSE] file for details.
