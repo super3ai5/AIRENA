@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/config/settings.ts","./src/config/wagmi.ts","./src/pages/aiagent/index.tsx","./src/pages/agentlist/index.tsx","./src/pages/publish/index.tsx","./src/services/ai.ts","./src/services/upload.ts","./src/types/global.d.ts"],"version":"5.6.3"}
