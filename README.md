@@ -150,7 +150,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
                                   |
                                   v
           +------------------------------------------------------+
-          |                 Communication Layer                    |
+          |                 Communication Layer                   |
           |  - DID-based routing                                  |
           |  - Workflow orchestration                             |
           |  - Agent invocation                                   |
