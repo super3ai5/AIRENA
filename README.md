@@ -19,7 +19,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 |                                   User                                       |
 +------------------------------------------------------------------------------+
 |                                  Client                                      |
-|       🌐 Web      ✖ DApps      🎮 Games      📸 Social Media      📱 Apps   |
+|       🌐 Web      ✖ DApps      🎮 Games      📸 Social Media      📱 Apps     |
 +------------------------------------------------------------------------------+
 |                     Universal Communication Layer                            |
 |    Enables interaction between components across layers and cross-chain DID  |
@@ -27,7 +27,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 +------------------------------------------------------------------------------+
 |                                    DID                                       |
 |              .eth        .sol        .sui           .bnb                     |
-|              🦄           🔥           📦             🟦                    |
+|              🦄           🔥           📦             🟦                      |
 +------------------------------------------------------------------------------+
 |                                   IPFS                                       |
 |  Agent Metadata and Memory                  +--------------------------------+
@@ -39,7 +39,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 |                                            +--------------------------------+
 +------------------------------------------------------------------------------+
 |                                   Models                                     |
-|       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini              |
+|       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini                |
 |                                                                              |
 +------------------------------------------------------------------------------+
 ```
@@ -165,12 +165,12 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
     +------------------+  +------------------+  +------------------+
     |  Task Output 1   |  |  Task Output 2   |  |  Task Output N   |
     +------------------+  +------------------+  +------------------+
-                \                |                    /
-                 \               v                   /
-                +-----------------------------------------------+
-                |        Final Workflow Integration              |
-                |   (Combines agent outputs into results)        |
-                +-----------------------------------------------+
+                \                 |                    /
+                 \                v                   /
+          +-----------------------------------------------+
+          |        Final Workflow Integration              |
+          |   (Combines agent outputs into results)        |
+          +-----------------------------------------------+
 ```
 
 ### Memory and Context Handling
