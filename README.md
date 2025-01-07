@@ -1,23 +1,18 @@
-
-# **AIpfs: The Autonomous On-chain Agent Network**
+# AIpfs: The Autonomous On-chain Agent Network
 
 Welcome to AIpfs, a modular network for generating and managing autonomous AI agents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
 
-🔍  On-Chain Real-Time Transparency
+## Key Features
 
-🛠️  Serverless & Unstoppable Architecture
+- 🔍 On-Chain Real-Time Transparency
+- 🛠️ Serverless & Unstoppable Architecture  
+- 🆔 Cross-Chain Agent DID
+- 🌐 Permissionless Access
+- 🧠 Interoperable Swarm Intelligence
 
-🆔  Cross-Chain Agent DID
+## Architecture Overview
 
-🌐  Permissionless Access
-
-🧠  Interoperable Swarm Intelligence
-
----
-
-## **Architecture Overview**
-
-### **System-Level Diagram**
+### System-Level Diagram
 
 ```
 +------------------------------------------------------------------------------+
@@ -35,134 +30,98 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 |              🦄           🔥           📦             🟦                    |
 +------------------------------------------------------------------------------+
 |                                   IPFS                                       |
-|  Agent Metadata and Memory                  +-----------------------------+  |
-|  Integrated with decentralized storage      |           Plugins           |  |
-|  and retrieval for transparency             |   - Wallets                 |  |
-|                                             |   - DeFi                    |  |
-|                                             |   - Data                    |  |
-|                                             |   - Game Engines            |  |
-|                                             +-----------------------------+  |
+|  Agent Metadata and Memory                  +--------------------------------+
+|  Integrated with decentralized storage      |            Plugins             |
+|  and retrieval for transparency            |    - Wallets                    |
+|                                            |    - DeFi                       |
+|                                            |    - Data                       |
+|                                            |    - Game Engines               |
+|                                            +--------------------------------+
 +------------------------------------------------------------------------------+
 |                                   Models                                     |
-|       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini              ｜ 
-|                                                                              |  
+|       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini              |
+|                                                                              |
 +------------------------------------------------------------------------------+
 ```
 
----
+## Core Features
 
-## **Features**
+### AI Agent Generation
+- Generate AI agents via official page (e.g., `AIpfs.eth`)
+- Submit metadata (avatar, persona, description, ENS bindings)
+- Host agents on IPFS with verifiable hash
 
-### **Core Functionalities**
+### Communication Protocol
+- Agent communication via unique DID (`.eth`, `.sol`, `.sui`)
+- Cross-chain interoperability through DID references
 
-1. **AI Agent Generation**
-    - Users can generate AI agents via the official page (e.g., `AIpfs.eth`).
-    - Metadata such as avatar, persona, description, and ENS bindings are submitted through forms.
-    - Each agent is hosted on IPFS with a verifiable hash.
-2. **Communication Protocol**
-    - Agents communicate via their unique DID (e.g., `.eth`, `.sol`, `.sui`).
-    - Users can summon agents by referencing their DID, enabling cross-chain interoperability.
-3. **Data Storage**
-    - Persistent storage of logs, interactions, and metadata on IPFS.
-    - Open data for AI training and retrieval, facilitating reproducibility and transparency.
-4. **Governance**
-    - DID domains can be managed by user-owned DAOs.
-    - Token-based governance for DID and agent management.
+### Data Storage
+- IPFS-based persistent storage for logs and metadata
+- Open data access for AI training and verification
 
-### **Components**
+### Governance
+- DAO-managed DID domains
+- Token-based governance system
 
-### **1. User Interface (UI)**
+## Components
 
-- **Frontend**: Built with modern web frameworks (React/Next.js).
-- **Interaction**: Provides forms for agent metadata and IPFS deployment.
+### 1. User Interface (UI)
+- Frontend: React/Next.js based
+- Interactive forms for agent deployment
 
-### **2. DID Layer**
+### 2. DID Layer
+- DID-IPFS hash binding via signatures
+- Multi-chain extension support
 
-- **Bindings**: DID are tied to IPFS content hashes using user signatures.
-- **Extensions**: Support for `.eth`, `.sol`, `.sui`.
-
-### **3. Agent Metadata Layer**
-
-- **IPFS Storage**: Agent metadata stored as JSON files.
-- **Structure**:
-
-```
+### 3. Agent Metadata Layer
+```json
 {
-  "name": "AgentName",
-  "avatar": "ipfs://hash",
-  "description": "AI agent description",
-  "did": "agentname.eth",
-  "persona": "{Base Prompt Data}",
-  "etc": "additional metadata"
+  "name": "AgentName",
+  "avatar": "ipfs://hash",
+  "description": "AI agent description",
+  "did": "agentname.eth",
+  "persona": "{Base Prompt Data}",
+  "etc": "additional metadata"
 }
 ```
 
-### **4. LLM API Layer**
+### 4. LLM API Layer
+- OpenRouter integration for multiple models
+- Extensible model backend support
 
-- **OpenRouter Integration**: Proxy LLM calls to GPT, Claude, Llama etc.
-- **Extendable**: Add or replace model backends dynamically.
+### 5. Context Memory Layer
+- Glitter Protocol integration
+- Configurable session logging
 
-### **5. Context Memory Layer**
+### 6. Data Layer
+- Decentralized database integration
+- RAG enhancement capabilities
 
-- **Glitter Protocol**:
-    - Persistent storage of conversations.
-    - Queryable memory for agent context.
-- **User Control**: Session logging options for privacy.
+### 7. Wallet Component
+- Web3 wallet integration (MetaMask/Phantom)
+- Multi-chain asset management
 
-### **6. Data Layer**
+### 8. Governance Layer
+- Token-based DAO voting
+- Flexible DID management options
 
-- **Data Sources**:
-    - Decentralized databases from Glitter Protocol.
-- **Usage**:
-    - Fine-tune RAG (retrieval-augmented generation).
+## Implementation Details
 
-### **7. Wallet Component**
-
-- **Integration**:
-    - Web3 wallets like MetaMask / Phantom.
-    - Multi-chain asset support.
-- **Features**:
-    - Secure transaction signing.
-    - Access control for agents.
-
-### **8. Governance Layer**
-
-- **DAO Integration**:
-    - Token-based voting mechanisms for ENS management.
-    - Community-driven DID governance.
-- **Flexibility**:
-    - User retains the option for personal ENS control.
-
----
-
-## **Implementation Details**
-
-### **Generating a New AI Agent**
-
-1. User fills out the agent creation form at `AIpfs.eth`.
-2. Form submission triggers the following sequence:
-
+### Agent Generation Process
 ```
-+-------------+            +------------+             +------------+
++-------------+            +------------+             +------------+
 | User Input  | --(JSON)-> | IPFS Node  | --(CID)---> | ENS Update |
-+-------------+            +------------+             +------------+
++-------------+            +------------+             +------------+
 ```
 
-1. IPFS generates a CID for the metadata.
-2. User signs a transaction to bind the CID to their ENS domain.
-
-### **Agent Communication Protocol**
-
-- Agents communicate by resolving DIDs to content hashes:
-
+### Communication Protocol
 ```
-+------------+          +----------------+          +------------+
-| Requester  | --(DID)->| ENS Resolver   | --(CID)->| IPFS Node  |
-+------------+          +----------------+          +------------+
++------------+          +----------------+          +------------+
+| Requester  | --(DID)->| ENS Resolver   | --(CID)->| IPFS Node  |
++------------+          +----------------+          +------------+
 ```
 
 ### Agent-to-Agent Interaction Workflow
-
 ```
 +------------+            +----------------+                +------------+
 | Agent A    | ---(DID)-->| Communication  | ----(DID)----> | Agent B    |
@@ -182,43 +141,39 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 +-------------+            +----------------+             +--------------+
 ```
 
-### Multi-Agent Workflow via Communication Layer
-
+### Multi-Agent Workflow
 ```
-									+-------------------+
-									|       Human       |
-									|    (Requester)    |
-									+-------------------+
-									          |
-									          v
-+------------------------------------------------------+
-|                 Communication Layer                  |
-|  - DID-based routing                                 |
-|  - Workflow orchestration                            |
-|  - Agent invocation                                  |
-+------------------------------------------------------+
-    |                       |                       |
-    v                       v                       v
-+------------------+   +------------------+   +------------------+
-|    AI Agent 1    |   |    AI Agent 2    |   |    AI Agent N    |
-| (e.g., Language) |   | (e.g., Vision)   |   | (e.g., Trading)  |
-+------------------+   +------------------+   +------------------+
-    |                       |                       |
-+------------------+   +------------------+   +------------------+
-|  Task Output 1   |   |  Task Output 2   |   |  Task Output N   |
-+------------------+   +------------------+   +------------------+
-          \                   |                     /
-           \                  v                    /
-	      +-----------------------------------------------+
-	      |        Final Workflow Integration             |
-	      |   (Combines agent outputs into results)       |
-	      +-----------------------------------------------+
+                          +-------------------+
+                          |       Human       |
+                          |    (Requester)    |
+                          +-------------------+
+                                  |
+                                  v
+          +------------------------------------------------------+
+          |                 Communication Layer                    |
+          |  - DID-based routing                                  |
+          |  - Workflow orchestration                             |
+          |  - Agent invocation                                   |
+          +------------------------------------------------------+
+              |                    |                    |
+              v                    v                    v
+    +------------------+  +------------------+  +------------------+
+    |    AI Agent 1    |  |    AI Agent 2    |  |    AI Agent N    |
+    | (e.g., Language) |  | (e.g., Vision)   |  | (e.g., Trading)  |
+    +------------------+  +------------------+  +------------------+
+              |                    |                    |
+    +------------------+  +------------------+  +------------------+
+    |  Task Output 1   |  |  Task Output 2   |  |  Task Output N   |
+    +------------------+  +------------------+  +------------------+
+                \                |                    /
+                 \               v                   /
+                +-----------------------------------------------+
+                |        Final Workflow Integration              |
+                |   (Combines agent outputs into results)        |
+                +-----------------------------------------------+
 ```
 
-### Real-time Transparent **Memory and Context Handling**
-
-- Glitter Protocol stores conversational data:
-
+### Memory and Context Handling
 ```
     +-------------------+
     |       User        |
@@ -255,13 +210,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 +-----------------------------+
 ```
 
-- Users can query, view past interactions.
-
-### **Governance Workflow**
-
-1. Users delegate ENS control to a DAO.
-2. DAO uses governance tokens to vote on DID updates.
-
+### Governance Workflow
 ```
 +-----------------------------+
 | Community Development       |
@@ -312,27 +261,30 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 +-----------------------------+
 ```
 
----
+## Advantages
 
-## **Advantages**
+| Feature | AIpfs Network |
+|---------|---------------|
+| Transparency | Fully open IPFS storage |
+| Decentralization | DAO-governed ENS and DID |
+| Cross-Chain Support | Multi-chain DID interop |
+| RAG Integration | Built-in decentralized DB |
+| Governance | Flexible control options |
 
-| **Feature** | **AIpfs Network** |
-| --- | --- |
-| **Transparency** | Fully open IPFS storage |
-| **Decentralization** | DAO-governed ENS and DID management |
-| **Cross-Chain Support** | DID interoperability across chains |
-| **RAG Integration** | Built-in decentralized database query |
-| **Governance** | Flexible DAO or user DID control |
-
----
-
-## **Future Development**
+## Future Development
 
 1. **Multi-Agent Collaboration**
-    - Enable agents to autonomously interact and execute multi-agent workflows.
+   - Autonomous interaction capabilities
+   - Advanced workflow orchestration
+
 2. **Enhanced RAG Framework**
-    - Expand data sources.
+   - Expanded data source integration
+   - Improved retrieval mechanisms
+
 3. **Privacy Enhancements**
-    - zk-SNARKs for private interaction logs.
-4. **Improved Scalability**
-    - Layer 2 caching for IPFS and Glitter Protocol interactions.
+   - zk-SNARKs implementation
+   - Private interaction logging
+
+4. **Scalability Improvements**
+   - L2 caching optimization
+   - Protocol efficiency updates
