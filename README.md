@@ -32,11 +32,11 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 |                                   IPFS                                       |
 |  Agent Metadata and Memory                  +--------------------------------+
 |  Integrated with decentralized storage      |            Plugins             |
-|  and retrieval for transparency            |    - Wallets                    |
-|                                            |    - DeFi                       |
-|                                            |    - Data                       |
-|                                            |    - Game Engines               |
-|                                            +--------------------------------+
+|  and retrieval for transparency             |    - Wallets                   |
+|                                             |    - DeFi                      |
+|                                             |    - Data                      |
+|                                             |    - Game Engines              |
+|                                             +--------------------------------+
 +------------------------------------------------------------------------------+
 |                                   Models                                     |
 |       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini                |
