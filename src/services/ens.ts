@@ -103,3 +103,44 @@ export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
     throw error;
   }
 };
+
+export const getUserENSDomains = async (address: string): Promise<string[]> => {
+  try {
+    if (!window.ethereum) {
+      console.warn("MetaMask not installed");
+      return [];
+    }
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    
+    const network = await provider.getNetwork();
+    if (network.chainId !== 1) { 
+      console.warn("Please switch to Ethereum mainnet");
+      return [];
+    }
+
+    const ensReverseRecordsAddress = "0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C";
+    const ensReverseRecordsABI = [
+      "function getNames(address[] addresses) external view returns (string[] memory)"
+    ];
+
+    const reverseRecords = new ethers.Contract(
+      ensReverseRecordsAddress,
+      ensReverseRecordsABI,
+      provider
+    );
+
+    const timeoutPromise = new Promise<string[]>((_, reject) => {
+      setTimeout(() => reject(new Error("Request timeout")), 10000);
+    });
+
+    const namesPromise = reverseRecords.getNames([address]);
+    const names = await Promise.race([namesPromise, timeoutPromise]);
+
+    return Array.isArray(names) ? names.filter((name: string) => name && name !== "") : [];
+
+  } catch (error) {
+    console.error("Failed to fetch ENS domains:", error);
+    return [];
+  }
+};

@@ -1,85 +1,109 @@
-.layout {
-  width: 100%;
-  min-width: 1000px;
-  height: 100%;
-  border-radius: 6px;
-  display: flex;
-  background: #fff;
-  font-family: AlibabaPuHuiTi, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji",
-    sans-serif;
+.ai-agent-container {
+  min-height: 100vh;
+  padding-top: 48px;
+  background-image: url("../../assets/images/background.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  font-family: 'NexaText-Regular';
 
-  :global(.ant-prompts) {
-    color: rgba(0, 0, 0, 0.88);
+  .agent-header {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .agent-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .agent-avatar {
+        width: 132px;
+        height: 132px;
+        border-radius: 24px;
+        object-fit: cover;
+      }
+
+      .agent-details {
+        .agent-name {
+          margin: 0;
+          font-size: 20px;
+          font-family: 'NexaText-Bold';
+          color: #333333;
+          font-weight: 600;
+        }
+
+        .agent-desc {
+          margin: 4px 0 0;
+          color: #666;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .chat-tag {
+      background: #f0f2f5;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+
+      .chat-icon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .chat-container {
+    display: flex;
+    width: 1036px;
+    height: 100%;
+    padding: 24px;
+    background: #f5f7fb;
+    border-radius: 32px 32px 32px 32px;
+    flex-direction: column;
+    margin: 0 auto;
+    height: calc(100vh - 96px);
+
+    .chat-section {
+      .divider {
+        width: 100%;
+        height: 1px;
+        background: #ced6e5;
+      }
+      .chat-title {
+        margin: 24px 0 16px;
+        display: flex;
+        font-family: "NexaText-Bold";
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+    }
+
+    .chat-main {
+      flex: 1;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+      }
+    }
   }
 }
 
-.menu {
-  background: rgba(0, 0, 0, 0.02);
-  width: 280px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.conversations {
-  padding: 0 12px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.chat {
-  height: 100%;
-  width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  gap: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.messages {
-  flex: 1;
-}
-
-.placeholder {
-  padding-top: 32px;
-}
-
-.sender {
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15);
-}
-
-.logo {
-  display: flex;
-  height: 72px;
-  align-items: center;
-  justify-content: start;
-  padding: 0 24px;
-  box-sizing: border-box;
-
-  img {
-    height: 24px;
-    display: inline-block;
+:global {
+  .ant-bubble-list-item {
+    margin-bottom: 16px;
   }
-
-  span {
-    display: inline-block;
-    margin: 0 8px;
-    font-weight: bold;
-    color: rgba(0, 0, 0, 0.88);
-    font-size: 16px;
-  }
-}
-
-.addBtn {
-  background: rgba(22, 119, 255, 0.06);
-  border: 1px solid rgba(22, 119, 255, 0.2);
-  width: calc(100% - 24px);
-  margin: 0 12px 24px 12px;
 }

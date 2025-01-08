@@ -330,8 +330,8 @@ export const generateHTML = (data: AgentData) => {
       2
     )};
   </script>
-  <script type="module" crossorigin src="https://chi111.github.io/test/agent.js"></script>
-  <link rel="stylesheet" crossorigin href="https://chi111.github.io/test/agent.css">
+  <script type="module" crossorigin src="https://aipfs.glitterprotocol.tech/agent/agent.js"></script>
+  <link rel="stylesheet" crossorigin href="https://aipfs.glitterprotocol.tech/agent/agent.css">
 </head>
 <body>
   <div id="root-ai-agent"></div>

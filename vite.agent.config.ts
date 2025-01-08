@@ -21,6 +21,7 @@ export default defineConfig({
     outDir: "dist/agent",
     emptyOutDir: true,
     assetsDir: ".",
+    assetsInlineLimit: 4096000, // 图片转 base64 编码的阈值
     rollupOptions: {
       input: {
         agent: path.resolve(__dirname, "AIAgent.html"),

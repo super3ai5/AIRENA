@@ -28,7 +28,7 @@ declare global {
  * Decrypt and get API key
  */
 export const API_KEY = decryptApiKey(
-  "JTE0JTA3RCUxQiUwNkglMDQlMUMlNUQlMTFWRSUwRFIlMDklMEElNUVVJTVDTCUxNiUwMSUxNCUxREElMTMlNUQlNDBXJTA2JTBFJTVFViU1RCUwREYlMTZUQkklMTNFVkMlNUVTJTBDWl9VJTBBTEYlMDdGJTFDRkFWJTEyJTVEWlklMERTJTVFX0FGJTAzJTQwJTE0QQ=="
+  "JTE0JTA3RCUxQiUwNkglMDQlMUMlNURCWSU0MFZSWlUlMDJZWCU0MCUxMiUwM0clMUFJRiU1Qk0lMEIlMDUlMDlYJTAyWlpMRVdGJTE0JTE1QiU1REMlMEUlMDFYJTBFUFklNUNCJTQwUSUxMSUxQiUxNUNaJTEwJTVDJTAwJTBEVVElMEElNUQlMTBFJTAxJTQwJTFGJTE0"
 );
 
 /**
@@ -43,7 +43,7 @@ export const openai = new OpenAI({
     "content-type": "application/json",
     authorization: `Bearer ${API_KEY}`,
     "HTTP-Referer": window.location.origin,
-    "X-Title": "Glitter AI Agent",
+    "X-Title": "AIpfs",
   },
 });
 

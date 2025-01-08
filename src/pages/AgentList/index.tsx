@@ -17,6 +17,8 @@ import Publish from "../Publish";
 import "./index.less";
 import axios from "axios";
 import { AxiosError } from "axios";
+import WalletConnect from "@/components/WalletConnect";
+import logo from "@/assets/images/logo.jpg";
 
 /**
  * Interface for AI Agent data
@@ -28,6 +30,7 @@ interface Agent {
   description: string;
   ens?: string;
   ipfsHash?: string;
+  address?: string;
 }
 
 /**
@@ -294,7 +297,17 @@ const AgentList: React.FC = () => {
    * @param agent New agent data
    */
   const handleCreateAgent = (agent: Agent) => {
-    const updatedAgents = [...agents, agent];
+    if (!address) {
+      message.error("Please connect wallet first");
+      return;
+    }
+
+    const agentWithAddress = {
+      ...agent,
+      address,
+    };
+
+    const updatedAgents = [...agents, agentWithAddress];
     setAgents(updatedAgents);
     saveLocalAgents(updatedAgents);
     setDrawerOpen(false);
@@ -310,9 +323,7 @@ const AgentList: React.FC = () => {
       key: "name",
       render: (_, record) => (
         <Space>
-          <Avatar
-            src={`https://ipfs.glitterprotocol.dev/ipfs/${record.avatar}`}
-          />
+          <Avatar src={record.avatar} />
           <span>{record.name}</span>
         </Space>
       ),
@@ -349,10 +360,17 @@ const AgentList: React.FC = () => {
     },
   ];
 
+  const filteredAgents = agents.filter(
+    (agent) => !agent.address || agent.address === address
+  );
+
   return (
     <div className="agent-list">
       <div className="header">
-        <h1>AI Agents Marketplace</h1>
+        <div className="logo">
+          <img width={48} height={48} src={logo} alt="" />
+          <h1>AIpfs</h1>
+        </div>
         <Space>
           {isConnected && (
             <Button
@@ -363,31 +381,21 @@ const AgentList: React.FC = () => {
               Create Agent
             </Button>
           )}
-          {isConnected ? (
-            <Button icon={<WalletOutlined />} onClick={handleDisconnect}>
-              {address?.slice(0, 6)}...{address?.slice(-4)}
-            </Button>
-          ) : (
-            <Button
-              icon={<WalletOutlined />}
-              onClick={handleConnect}
-              loading={connecting}
-              disabled={connecting}
-            >
-              {connecting ? "Connecting..." : "Connect Wallet"}
-            </Button>
-          )}
+          <WalletConnect loading={loading} onDisconnect={handleDisconnect} />
         </Space>
       </div>
 
       <Table
         columns={columns}
-        dataSource={agents}
+        dataSource={filteredAgents}
         rowKey="id"
         className="agent-table"
         loading={loading}
         pagination={{
           defaultPageSize: 10,
+          style: {
+            margin: "16px 32px",
+          },
           showSizeChanger: true,
           showQuickJumper: true,
         }}
@@ -402,13 +410,13 @@ const AgentList: React.FC = () => {
         styles={{
           body: {
             padding: 24,
-            display: 'flex',
-            justifyContent: 'center',
+            display: "flex",
+            justifyContent: "center",
           },
         }}
       >
         {isConnected ? (
-          <div style={{ maxWidth: 800, width: '100%' }}>
+          <div style={{ maxWidth: 800, width: "100%" }}>
             <Publish onSuccess={handleCreateAgent} />
           </div>
         ) : (

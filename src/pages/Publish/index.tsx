@@ -5,13 +5,14 @@
  */
 
 import React from "react";
-import { Form, Input, Upload, Button, message } from "antd";
+import { Form, Input, Upload, Button, message, Select, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
 import type { RcFile, UploadChangeParam } from "antd/es/upload";
 import "./index.less";
 import { uploadToIPFS, generateHTML, uploadAvatar } from "@/services/upload";
-import { setEnsRecord } from "@/services/ens";
+import { setEnsRecord, getUserENSDomains } from "@/services/ens";
+import { useAccount } from "wagmi";
 
 const { TextArea } = Input;
 
@@ -43,6 +44,7 @@ interface Agent {
   description: string;
   did: string;
   ipfsHash: string;
+  address: string;
 }
 
 /**
@@ -58,24 +60,11 @@ interface PublishProps {
 const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
   // Form and state management
   const [form] = Form.useForm<FormValues>();
-  const [avatar, setAvatar] = React.useState<CustomUploadFile[]>([]);
   const [avatarHash, setAvatarHash] = React.useState<string>("");
   const [submitting, setSubmitting] = React.useState(false);
-
-  /**
-   * Handle avatar upload changes
-   */
-  const handleChange = (info: UploadChangeParam<UploadFile>) => {
-    const fileList = info.fileList.map((file) => ({
-      ...file,
-      ipfsHash: (file as CustomUploadFile).ipfsHash,
-    })) as CustomUploadFile[];
-
-    setAvatar(fileList);
-    if (fileList.length === 0) {
-      form.setFieldsValue({ avatar: undefined });
-    }
-  };
+  const { address } = useAccount();
+  const [ensDomains, setEnsDomains] = React.useState<string[]>([]);
+  const [loadingDomains, setLoadingDomains] = React.useState(false);
 
   /**
    * Validate and upload avatar before adding to form
@@ -99,17 +88,6 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
 
       // Upload to IPFS
       const ipfsHash = await uploadAvatar(file);
-
-      // Update form with new avatar
-      const newAvatar = {
-        uid: "-1",
-        name: file.name,
-        status: "done",
-        url: `https://ipfs.glitterprotocol.dev/ipfs/${ipfsHash}`,
-        ipfsHash,
-      } as CustomUploadFile;
-
-      setAvatar([newAvatar]);
       setAvatarHash(ipfsHash);
       form.setFieldsValue({ avatar: ipfsHash });
       await form.validateFields(["avatar"]);
@@ -129,6 +107,10 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
   const onFinish = async (values: FormValues) => {
     try {
       setSubmitting(true);
+      if (!address) {
+        message.error("Please connect wallet first");
+        return;
+      }
 
       // Generate HTML content
       const htmlContent = generateHTML({
@@ -168,13 +150,13 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
           : "",
         description: values.functionDesc,
         did: values.did,
+        address: address || "",
         ipfsHash,
       };
 
       onSuccess(agent);
       message.success("Agent created successfully");
       form.resetFields();
-      setAvatar([]);
       setAvatarHash("");
     } catch (error) {
       console.error("Error creating agent:", error);
@@ -188,6 +170,34 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
     }
   };
 
+  /**
+   * Fetch ENS domains on component mount
+   */
+  React.useEffect(() => {
+    const fetchENSDomains = async () => {
+      console.log(address, "address");
+      if (!address) return;
+
+      try {
+        setLoadingDomains(true);
+        const domains = await getUserENSDomains(address);
+        console.log(domains, "domains");
+        setEnsDomains(domains);
+
+        if (domains.length === 0) {
+          message.info("No ENS domains found for this address");
+        }
+      } catch (error) {
+        console.error("Failed to fetch ENS domains:", error);
+        message.error("Failed to load ENS domains. Please try again later.");
+      } finally {
+        setLoadingDomains(false);
+      }
+    };
+
+    fetchENSDomains();
+  }, [address]);
+
   return (
     <div className="publish-container">
       <Form<FormValues>
@@ -199,9 +209,12 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
         <Form.Item
           label="Agent Name"
           name="name"
-          rules={[{ required: true, message: "Please input Agent Name!" }]}
+          rules={[
+            { required: true, message: "Please input Agent Name!" },
+            { max: 50, message: "Agent Name cannot exceed 50 characters!" },
+          ]}
         >
-          <Input placeholder="Enter Agent Name" />
+          <Input placeholder="Enter Agent Name" maxLength={50} showCount />
         </Form.Item>
 
         <Form.Item
@@ -211,12 +224,16 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
         >
           <Upload
             listType="picture-card"
-            fileList={avatar}
-            onChange={handleChange}
+            showUploadList={false}
             beforeUpload={beforeUpload}
-            maxCount={1}
           >
-            {avatar.length === 0 && (
+            {avatarHash ? (
+              <img
+                src={`https://ipfs.glitterprotocol.dev/ipfs/${avatarHash}`}
+                alt="avatar"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
               <div>
                 <UploadOutlined />
                 <div style={{ marginTop: 8 }}>Upload</div>
@@ -228,11 +245,16 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
         <Form.Item
           label="Agent Intro"
           name="functionDesc"
-          rules={[{ required: true, message: "Please input Agent Intro!" }]}
+          rules={[
+            { required: true, message: "Please input Agent Intro!" },
+            { max: 150, message: "Agent Intro cannot exceed 150 characters!" },
+          ]}
         >
           <TextArea
             placeholder="Provide a brief introduction for the AI agent here"
             autoSize={{ minRows: 3, maxRows: 6 }}
+            maxLength={150}
+            showCount
           />
         </Form.Item>
 
@@ -255,9 +277,30 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
         <Form.Item
           label="DID"
           name="did"
-          rules={[{ required: true, message: "Please input DID!" }]}
+          rules={[{ required: true, message: "Please select an ENS domain!" }]}
         >
-          <Input placeholder="Enter DID or ENS name" />
+          <Select
+            placeholder={
+              address ? "Select your ENS domain" : "Please connect wallet first"
+            }
+            loading={loadingDomains}
+            notFoundContent={
+              loadingDomains ? (
+                <Spin size="small" />
+              ) : !address ? (
+                "Please connect wallet first"
+              ) : ensDomains.length === 0 ? (
+                "No ENS domains found for this address"
+              ) : null
+            }
+            disabled={!address}
+          >
+            {ensDomains.map((domain) => (
+              <Select.Option key={domain} value={domain}>
+                {domain}
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item>

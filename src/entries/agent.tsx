@@ -7,7 +7,7 @@ import ReactDOM from "react-dom/client";
 import AIAgent from "../pages/AIAgent";
 
 import "antd/dist/reset.css";
-import "../index.css";
+import "../index.less";
 
 /**
  * Extend Window interface to include aiData property
