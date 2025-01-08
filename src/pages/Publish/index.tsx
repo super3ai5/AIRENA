@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * AI Agent Publication Component
  * Allows users to create and publish new AI agents
@@ -10,6 +11,7 @@ import type { UploadFile } from "antd/es/upload/interface";
 import type { RcFile, UploadChangeParam } from "antd/es/upload";
 import "./index.less";
 import { uploadToIPFS, generateHTML, uploadAvatar } from "@/services/upload";
+import { setEnsRecord } from "@/services/ens";
 
 const { TextArea } = Input;
 
@@ -39,7 +41,6 @@ interface Agent {
   name: string;
   avatar: string;
   description: string;
-  apiKey: string;
   did: string;
   ipfsHash: string;
 }
@@ -127,45 +128,61 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
    */
   const onFinish = async (values: FormValues) => {
     try {
-      if (!values.avatar) {
-        message.error("Please upload avatar first!");
+      setSubmitting(true);
+
+      // Generate HTML content
+      const htmlContent = generateHTML({
+        name: values.name,
+        avatar: avatarHash,
+        functionDesc: values.functionDesc,
+        behaviorDesc: values.behaviorDesc,
+        did: values.did,
+      });
+
+      // Upload HTML to IPFS
+      const ipfsHash = await uploadToIPFS(htmlContent);
+      console.log(ipfsHash, "ipfsHash");
+      console.log(values.did, "values.did");
+
+      // Set ENS records if DID is an ENS domain
+      try {
+        await setEnsRecord(values.did, ipfsHash);
+        message.success("ENS records updated successfully");
+      } catch (error) {
+        console.error("Failed to set ENS records:", error);
+        if (error instanceof Error) {
+          message.error(`Failed to update ENS records: ${error.message}`);
+        } else {
+          message.error("Failed to update ENS records");
+        }
+        // Return early if ENS binding fails
         return;
       }
 
-      setSubmitting(true);
-      const id = `${Date.now()}`;
-
-      // Prepare agent data
-      const agentData = {
-        ...values,
-        id,
-        avatar: avatarHash,
-      };
-
-      // Generate and upload HTML to IPFS
-      const html = generateHTML(agentData);
-      const htmlIpfsHash = await uploadToIPFS(html);
-      
-      // Create new agent object
-      const newAgent: Agent = {
-        id,
+      // Create Agent object
+      const agent: Agent = {
+        id: ipfsHash,
         name: values.name,
-        avatar: avatarHash,
+        avatar: avatarHash
+          ? `https://ipfs.glitterprotocol.dev/ipfs/${avatarHash}`
+          : "",
         description: values.functionDesc,
         did: values.did,
-        ipfsHash: htmlIpfsHash,
-        apiKey: '',
+        ipfsHash,
       };
 
-      onSuccess(newAgent);
-      message.success("Agent created successfully!");
+      onSuccess(agent);
+      message.success("Agent created successfully");
       form.resetFields();
       setAvatar([]);
       setAvatarHash("");
-    } catch (err) {
-      const error = err as Error;
-      message.error("Failed to create agent");
-      console.error("Create error:", error.message);
+    } catch (error) {
+      console.error("Error creating agent:", error);
+      if (error instanceof Error) {
+        message.error(`Failed to create agent: ${error.message}`);
+      } else {
+        message.error("Failed to create agent");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -240,7 +257,7 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
           name="did"
           rules={[{ required: true, message: "Please input DID!" }]}
         >
-          <Input placeholder="Enter DID" />
+          <Input placeholder="Enter DID or ENS name" />
         </Form.Item>
 
         <Form.Item>
