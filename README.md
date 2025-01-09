@@ -1,5 +1,7 @@
 # AIWS: The Autonomous On-chain Agent Network
 
+![Banner Animation](./assets/BannerAni.gif)
+
 Welcome to AIWS, a modular network for generating and managing autonomous AI agents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
 
 ## Key Features
@@ -13,6 +15,8 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 ## Architecture Overview
 
 ### System-Level Diagram
+
+![AIWS Architecture](./assets/AIWS.jpg)
 
 ```
 +------------------------------------------------------------------------------+
