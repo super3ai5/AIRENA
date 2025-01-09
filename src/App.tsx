@@ -5,7 +5,6 @@ import { WagmiConfig, createConfig, configureChains, mainnet } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { ConfigProvider, theme } from "antd";
 
-// 配置 wagmi
 const { publicClient, webSocketPublicClient } = configureChains(
   [mainnet],
   [publicProvider()]

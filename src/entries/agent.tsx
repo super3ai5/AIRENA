@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import { ConfigProvider } from "antd";
 import ReactDOM from "react-dom/client";
 import AIAgent from "../pages/AIAgent";
 
@@ -61,9 +62,11 @@ if (window.aiData) {
 const root = document.getElementById("root-ai-agent");
 if (root) {
   ReactDOM.createRoot(root).render(
-    <React.StrictMode>
-      <AIAgent />
-    </React.StrictMode>
+    <ConfigProvider>
+      <React.StrictMode>
+        <AIAgent />
+      </React.StrictMode>
+    </ConfigProvider>
   );
 } else {
   console.error("Root element not found");

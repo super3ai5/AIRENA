@@ -5,7 +5,9 @@
  */
 
 import { Bubble, Sender, useXAgent, useXChat } from "@ant-design/x";
-import React, { useEffect } from "react";
+import { Avatar, Button, Modal, Tooltip } from "antd";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import React, { useEffect, useState } from "react";
 import "./index.less";
 import type { GetProp } from "antd";
 import { sendMessage, getCurrentHistory } from "@/services/ai";
@@ -64,6 +66,7 @@ type MessageType = GetProp<typeof Bubble.List, "items">[number];
  */
 const Independent: React.FC = () => {
   const [content, setContent] = React.useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Initialize AI agent with message handling
   const [agent] = useXAgent({
@@ -86,17 +89,35 @@ const Independent: React.FC = () => {
 
   // Load conversation history
   useEffect(() => {
-    const history = getCurrentHistory();
-    const historyMessages = history.map(
-      (msg, index) =>
-        ({
-          id: `${index}`,
-          message: msg.content,
-          status: msg.role === "user" ? "local" : "success",
-          role: msg.role === "user" ? "local" : "ai",
-        } as MessageType)
-    );
-    setMessages(historyMessages as any);
+    const loadHistory = async () => {
+      const history = getCurrentHistory();
+      if (history?.length === 0) {
+        const updatedHistory = getCurrentHistory();
+        const historyMessages = updatedHistory.map(
+          (msg, index) =>
+            ({
+              id: `${index}`,
+              message: msg.content,
+              status: msg.role === "user" ? "local" : "success",
+              role: msg.role === "user" ? "local" : "ai",
+            } as MessageType)
+        );
+        setMessages(historyMessages as any);
+      } else {
+        const historyMessages = history.map(
+          (msg, index) =>
+            ({
+              id: `${index}`,
+              message: msg.content,
+              status: msg.role === "user" ? "local" : "success",
+              role: msg.role === "user" ? "local" : "ai",
+            } as MessageType)
+        );
+        setMessages(historyMessages as any);
+      }
+    };
+
+    loadHistory();
   }, [setMessages]);
 
   // Handle message submission
@@ -110,11 +131,21 @@ const Independent: React.FC = () => {
   const headerNode = (
     <div className="agent-header">
       <div className="agent-info">
-        <img src={avatar} className="agent-avatar" alt="agent avatar" />
+        <Avatar src={avatar} size={132} />
         <div className="agent-details">
           <h2 className="agent-name">{name}</h2>
-          <p className="agent-desc">{functionDesc}</p>
+          <Tooltip title={functionDesc}>
+            <p className="agent-desc">{functionDesc}</p>
+          </Tooltip>
         </div>
+        <Button
+          type="primary"
+          className="agent-details-btn"
+          icon={<InfoCircleOutlined />}
+          onClick={() => setIsModalOpen(true)}
+        >
+          View Details
+        </Button>
       </div>
     </div>
   );
@@ -144,11 +175,44 @@ const Independent: React.FC = () => {
             value={content}
             onSubmit={onSubmit}
             onChange={setContent}
+            placeholder="Ask me anything"
             loading={agent.isRequesting()}
             className="sender"
           />
         </div>
       </div>
+
+      <Modal
+        title="AI Agent Details"
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width={600}
+        centered
+      >
+        <div className="agent-details-modal">
+          <div className="avatar-section">
+            <Avatar src={window.aiData?.avatar || AVATAR_URL} size={100} />
+            <h3 className="agent-name">{window.aiData?.name || "N/A"}</h3>
+          </div>
+          <div className="detail-item">
+            <h4>Agent Intro:</h4>
+            <p>{window.aiData?.functionDesc || "N/A"}</p>
+          </div>
+          <div className="detail-item">
+            <h4>Agent Description Prompt:</h4>
+            <p>{window.aiData?.behaviorDesc || "N/A"}</p>
+          </div>
+          <div className="detail-item">
+            <h4>Model:</h4>
+            <p>gpt-3.5-turbo</p>
+          </div>
+          <div className="detail-item">
+            <h4>DID:</h4>
+            <p>{window.aiData?.did || "N/A"}</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

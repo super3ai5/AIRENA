@@ -1,10 +1,16 @@
 .ai-agent-container {
-  min-height: 100vh;
+  height: 100vh;
   padding-top: 48px;
-  background-image: url("../../assets/images/background.png");
+  background-image: url("../../assets/images/background.jpg");
   background-size: contain;
   background-repeat: no-repeat;
-  font-family: 'NexaText-Regular';
+  font-family: "NexaText-Regular";
+  overflow: hidden;
+
+  .ant-bubble-content,
+  .ant-input {
+    color: #333333 !important;
+  }
 
   .agent-header {
     margin-bottom: 24px;
@@ -14,8 +20,14 @@
 
     .agent-info {
       display: flex;
+      width: 100%;
       align-items: center;
       gap: 16px;
+
+      .agent-details-btn {
+        margin-left: auto;
+        color: #fff;
+      }
 
       .agent-avatar {
         width: 132px;
@@ -25,18 +37,30 @@
       }
 
       .agent-details {
+        flex: 1;
         .agent-name {
           margin: 0;
           font-size: 20px;
-          font-family: 'NexaText-Bold';
+          font-family: "NexaText-Bold";
           color: #333333;
           font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          width: 100%;
+          text-overflow: ellipsis;
         }
 
         .agent-desc {
           margin: 4px 0 0;
           color: #666;
+          width: 100%;
           font-size: 14px;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.5;
         }
       }
     }
@@ -59,13 +83,12 @@
   .chat-container {
     display: flex;
     width: 1036px;
-    height: 100%;
+    height: calc(100vh - 96px);
     padding: 24px;
     background: #f5f7fb;
-    border-radius: 32px 32px 32px 32px;
+    border-radius: 32px;
     flex-direction: column;
     margin: 0 auto;
-    height: calc(100vh - 96px);
 
     .chat-section {
       .divider {
@@ -88,15 +111,39 @@
       flex: 1;
       background: white;
       border-radius: 16px;
-      padding: 20px;
+      max-height: calc(100% - 216px);
       display: flex;
       flex-direction: column;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
       .messages {
         flex: 1;
+        padding: 20px;
         overflow-y: auto;
         margin-bottom: 20px;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 3px;
+
+          &:hover {
+            background: #555;
+          }
+        }
+      }
+
+      .sender {
+        margin: 0 20px 20px 20px;
+        width: calc(100% - 40px);
       }
     }
   }
@@ -105,5 +152,41 @@
 :global {
   .ant-bubble-list-item {
     margin-bottom: 16px;
+  }
+}
+
+.agent-details-modal {
+  max-height: 600px;
+  overflow: auto;
+  .avatar-section {
+    text-align: center;
+    margin-bottom: 24px;
+
+    .ant-avatar {
+      margin-bottom: 12px;
+    }
+
+    .agent-name {
+      margin: 0;
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+    }
+  }
+
+  .detail-item {
+    margin-bottom: 16px;
+
+    h4 {
+      margin: 0 0 4px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0;
+      color: #666;
+      word-break: break-all;
+    }
   }
 }

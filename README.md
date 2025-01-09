@@ -1,6 +1,6 @@
-# AIpfs: The Autonomous On-chain Agent Network
+# AIWS: The Autonomous On-chain Agent Network
 
-Welcome to AIpfs, a modular network for generating and managing autonomous AI agents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
+Welcome to AIWS, a modular network for generating and managing autonomous AI agents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
 
 ## Key Features
 
@@ -47,7 +47,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 ## Core Features
 
 ### AI Agent Generation
-- Generate AI agents via official page (e.g., `AIpfs.eth`)
+- Generate AI agents via official page (e.g., `AIWS.eth`)
 - Submit metadata (avatar, persona, description, ENS bindings)
 - Host agents on IPFS with verifiable hash
 
@@ -263,7 +263,7 @@ Welcome to AIpfs, a modular network for generating and managing autonomous AI ag
 
 ## Advantages
 
-| Feature | AIpfs Network |
+| Feature | AIWS Network |
 |---------|---------------|
 | Transparency | Fully open IPFS storage |
 | Decentralization | DAO-governed ENS and DID |

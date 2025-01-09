@@ -21,7 +21,7 @@ export default defineConfig({
     outDir: "dist/agent",
     emptyOutDir: true,
     assetsDir: ".",
-    assetsInlineLimit: 4096000, // 图片转 base64 编码的阈值
+    assetsInlineLimit: 4096000,
     rollupOptions: {
       input: {
         agent: path.resolve(__dirname, "AIAgent.html"),
@@ -30,12 +30,12 @@ export default defineConfig({
         entryFileNames: "[name].js",
         chunkFileNames: "[name].js",
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name?.endsWith('.css')) {
-            return 'agent.css';
+          if (assetInfo.name?.endsWith(".css")) {
+            return "agent.css";
           }
-          return '[name][extname]';
+          return "[name][extname]";
         },
       },
     },
   },
-}); 
+});

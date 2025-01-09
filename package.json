@@ -1,5 +1,5 @@
 {
-  "name": "AIpfs",
+  "name": "AIWS",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -14,6 +14,8 @@
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
     "@ant-design/x": "^1.0.4",
+    "@ensdomains/content-hash": "^3.0.0",
+    "@ensdomains/ensjs": "^4.0.2",
     "@wagmi/core": "1.4.13",
     "antd": "^5.22.7",
     "antd-style": "^3.7.1",
@@ -22,7 +24,6 @@
     "openai": "^4.77.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@ensdomains/content-hash": "^3.0.0",
     "react-router-dom": "^7.1.1",
     "viem": "1.21.4",
     "wagmi": "1.4.13"

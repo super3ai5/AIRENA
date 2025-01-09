@@ -7,21 +7,13 @@
 import React from "react";
 import { Form, Input, Upload, Button, message, Select, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import type { UploadFile } from "antd/es/upload/interface";
-import type { RcFile, UploadChangeParam } from "antd/es/upload";
+import type { RcFile } from "antd/es/upload";
 import "./index.less";
 import { uploadToIPFS, generateHTML, uploadAvatar } from "@/services/upload";
-import { setEnsRecord, getUserENSDomains } from "@/services/ens";
+import { setEnsRecord, getAllOwnedENSDomains } from "@/services/ens";
 import { useAccount } from "wagmi";
 
 const { TextArea } = Input;
-
-/**
- * Extended UploadFile interface with IPFS hash
- */
-interface CustomUploadFile extends Omit<UploadFile, "originFileObj"> {
-  ipfsHash?: string;
-}
 
 /**
  * Form values interface for agent creation
@@ -180,12 +172,10 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
 
       try {
         setLoadingDomains(true);
-        const domains = await getUserENSDomains(address);
-        console.log(domains, "domains");
-        setEnsDomains(domains);
-
-        if (domains.length === 0) {
-          message.info("No ENS domains found for this address");
+        const ownedNames = await getAllOwnedENSDomains(address);
+        console.log(ownedNames, "ownedNames");
+        if (ownedNames.length > 0) {
+          setEnsDomains(ownedNames);
         }
       } catch (error) {
         console.error("Failed to fetch ENS domains:", error);
@@ -198,6 +188,12 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
     fetchENSDomains();
   }, [address]);
 
+  const handleReset = () => {
+    form.resetFields();
+    setAvatarHash("");
+    setLoadingDomains(false);
+  };
+
   return (
     <div className="publish-container">
       <Form<FormValues>
@@ -205,6 +201,7 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
         layout="vertical"
         onFinish={onFinish}
         requiredMark="optional"
+        onReset={handleReset}
       >
         <Form.Item
           label="Agent Name"
@@ -294,6 +291,22 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
               ) : null
             }
             disabled={!address}
+            onDropdownVisibleChange={async (open) => {
+              if (open && address) {
+                try {
+                  setLoadingDomains(true);
+                  const domains = await getAllOwnedENSDomains(address);
+                  if (domains.length > 0) {
+                    setEnsDomains(domains);
+                  }
+                } catch (error) {
+                  console.error("Failed to fetch ENS domains:", error);
+                  message.error("Failed to load ENS domains");
+                } finally {
+                  setLoadingDomains(false);
+                }
+              }
+            }}
           >
             {ensDomains.map((domain) => (
               <Select.Option key={domain} value={domain}>

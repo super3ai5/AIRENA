@@ -7,11 +7,11 @@ import App from "./App";
 import "./index.less";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <WagmiConfig config={config}>
-      <HashRouter>
-        <App />
-      </HashRouter>
-    </WagmiConfig>
-  </React.StrictMode>
+  // <React.StrictMode>
+  <WagmiConfig config={config}>
+    <HashRouter>
+      <App />
+    </HashRouter>
+  </WagmiConfig>
+  // </React.StrictMode>
 );

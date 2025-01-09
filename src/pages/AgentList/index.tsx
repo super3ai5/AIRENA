@@ -3,8 +3,8 @@
  * Displays a list of AI agents and provides functionality to create new agents
  */
 
-import React, { useState, useCallback, useEffect } from "react";
-import { Avatar, Button, Table, Drawer, Space, message } from "antd";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { Avatar, Button, Table, Drawer, Space, message, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useConnect, useAccount, useDisconnect, useSignMessage } from "wagmi";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
@@ -28,7 +28,7 @@ interface Agent {
   name: string;
   avatar: string;
   description: string;
-  ens?: string;
+  did: string;
   ipfsHash?: string;
   address?: string;
 }
@@ -284,15 +284,6 @@ const AgentList: React.FC = () => {
   };
 
   /**
-   * Open chat with selected agent
-   * @param agentId IPFS hash of agent
-   */
-  const handleChat = (agentId: string | undefined) => {
-    if (!agentId) return;
-    window.open(`https://ipfs.glitterprotocol.dev/ipfs/${agentId}`, "_blank");
-  };
-
-  /**
    * Handle creation of new agent
    * @param agent New agent data
    */
@@ -311,6 +302,35 @@ const AgentList: React.FC = () => {
     setAgents(updatedAgents);
     saveLocalAgents(updatedAgents);
     setDrawerOpen(false);
+  };
+
+  const filteredAgents = agents
+    .filter((agent) => !agent.address || agent.address === address)
+    .sort((a, b) => b.id.localeCompare(a.id));
+
+  const latestAgentsByDid = useMemo(() => {
+    const groupedByDid = filteredAgents.reduce((acc, agent) => {
+      if (!acc[agent.did]) {
+        acc[agent.did] = agent;
+      } else if (agent.id.localeCompare(acc[agent.did].id) > 0) {
+        acc[agent.did] = agent;
+      }
+      return acc;
+    }, {} as Record<string, Agent>);
+
+    return groupedByDid;
+  }, [filteredAgents]);
+
+  /**
+   * Open chat with selected agent
+   * @param agentId IPFS hash of agent
+   */
+  const handleChat = (agent: Agent) => {
+    const isLatest = latestAgentsByDid[agent.did]?.id === agent.id;
+    const link = isLatest
+      ? `https://${agent.did}.limo`
+      : `https://ipfs.glitterprotocol.dev/ipfs/${agent.ipfsHash}`;
+    window.open(link, "_blank");
   };
 
   /**
@@ -346,13 +366,30 @@ const AgentList: React.FC = () => {
       key: "did",
     },
     {
+      title: "ipfsHash",
+      dataIndex: "ipfsHash",
+      key: "ipfsHash",
+      render: (ipfsHash) => {
+        return (
+          <a
+            href={`https://ipfs.glitterprotocol.dev/ipfs/${ipfsHash}`}
+            target="_blank"
+          >
+            <Tooltip title={ipfsHash}>
+              {ipfsHash.slice(0, 6)}...{ipfsHash.slice(-4)}
+            </Tooltip>
+          </a>
+        );
+      },
+    },
+    {
       title: "Action",
       key: "action",
       render: (_, record) => (
         <Button
           type="primary"
           icon={<MessageOutlined />}
-          onClick={() => handleChat(record.ipfsHash)}
+          onClick={() => handleChat(record)}
         >
           Chat
         </Button>
@@ -360,16 +397,12 @@ const AgentList: React.FC = () => {
     },
   ];
 
-  const filteredAgents = agents.filter(
-    (agent) => !agent.address || agent.address === address
-  );
-
   return (
     <div className="agent-list">
       <div className="header">
         <div className="logo">
           <img width={48} height={48} src={logo} alt="" />
-          <h1>AIpfs</h1>
+          <h1>AIWS</h1>
         </div>
         <Space>
           {isConnected && (

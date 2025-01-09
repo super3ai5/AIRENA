@@ -34,6 +34,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
     },
   });
 
+  // 
   const handleSwitchAccount = async () => {
     try {
       if (!window.ethereum) {

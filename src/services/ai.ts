@@ -43,9 +43,16 @@ export const openai = new OpenAI({
     "content-type": "application/json",
     authorization: `Bearer ${API_KEY}`,
     "HTTP-Referer": window.location.origin,
-    "X-Title": "AIpfs",
+    "X-Title": "AIWS",
   },
 });
+
+/**
+ * Remove quotes from start and end of text
+ */
+const removeQuotes = (text: string): string => {
+  return text.replace(/^["'""]|["'""]$/g, "").trim();
+};
 
 /**
  * Send message to AI and get response
@@ -61,39 +68,44 @@ export const sendMessage = async (message: string) => {
 
     // Get current conversation history
     const history = conversationHistories[currentConversationId] || [];
-
-    // Add system message if new conversation and behavior description exists
+    // Initialize new conversation
     if (history.length === 0 && window.aiData?.behaviorDesc) {
+      // Add system message with AI behavior description
       history.push({
         role: "system",
         content: window.aiData.behaviorDesc,
       });
     }
 
-    // Add user message to history
     history.push({ role: "user", content: message });
 
-    // Call API to get AI response
+    // Call API to get response
     const completion = await openai.chat.completions.create({
       model: "openai/gpt-3.5-turbo",
       messages: history,
-      temperature: 0.7, // Control response randomness
-      max_tokens: 1000, // Limit maximum response length
+      temperature: 0.7,
+      max_tokens: 1000,
     });
 
-    // Get AI response content
-    const response = completion.choices[0].message.content;
-    if (response) {
-      // Add AI response to history
-      history.push({ role: "assistant", content: response });
+    const response = completion.choices?.[0]?.message?.content;
+    if (!response) {
+      throw new Error("Invalid response from AI");
     }
+
+    // Remove quotes from response
+    const cleanResponse = removeQuotes(response);
+    history.push({ role: "assistant", content: cleanResponse });
 
     // Update conversation history
     conversationHistories[currentConversationId] = history;
-    return response;
+    return cleanResponse;
   } catch (error) {
     console.error("Error sending message:", error);
-    throw error;
+    const errorMessage = "Sorry, an error occurred. Please try again later.";
+    const history = conversationHistories[currentConversationId] || [];
+    history.push({ role: "assistant", content: errorMessage });
+    conversationHistories[currentConversationId] = history;
+    return errorMessage;
   }
 };
 
@@ -150,6 +162,5 @@ export const clearAllHistory = () => {
  */
 export const getCurrentHistory = () => {
   const history = conversationHistories[currentConversationId] || [];
-
   return history.filter((msg) => msg.role !== "system");
 };

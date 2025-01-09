@@ -1,5 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ethers } from "ethers";
 import { encode } from "@ensdomains/content-hash";
+import { createEnsPublicClient } from "@ensdomains/ensjs";
+import { mainnet } from "viem/chains";
+import { http } from "viem";
 
 // Mainnet configuration
 const MAINNET_CHAIN_ID = 1;
@@ -112,16 +116,17 @@ export const getUserENSDomains = async (address: string): Promise<string[]> => {
     }
 
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    
+
     const network = await provider.getNetwork();
-    if (network.chainId !== 1) { 
+    if (network.chainId !== 1) {
       console.warn("Please switch to Ethereum mainnet");
       return [];
     }
 
-    const ensReverseRecordsAddress = "0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C";
+    const ensReverseRecordsAddress =
+      "0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C";
     const ensReverseRecordsABI = [
-      "function getNames(address[] addresses) external view returns (string[] memory)"
+      "function getNames(address[] addresses) external view returns (string[] memory)",
     ];
 
     const reverseRecords = new ethers.Contract(
@@ -136,11 +141,72 @@ export const getUserENSDomains = async (address: string): Promise<string[]> => {
 
     const namesPromise = reverseRecords.getNames([address]);
     const names = await Promise.race([namesPromise, timeoutPromise]);
+    console.log("Names:", names);
 
-    return Array.isArray(names) ? names.filter((name: string) => name && name !== "") : [];
-
+    return Array.isArray(names)
+      ? names.filter((name: string) => name && name !== "")
+      : [];
   } catch (error) {
     console.error("Failed to fetch ENS domains:", error);
     return [];
   }
 };
+
+const createSharedEnsClient = () =>
+  createEnsPublicClient({
+    chain: mainnet,
+    transport: http(),
+    pollingInterval: 1000,
+    batch: {
+      multicall: {
+        batchSize: 100,
+        wait: 1000,
+      },
+    },
+  });
+
+export async function getENSSubdomains(
+  parentDomain: string
+): Promise<string[]> {
+  const ens = createSharedEnsClient();
+
+  try {
+    const subnames = await ens.getSubnames({
+      name: parentDomain,
+      pageSize: 100,
+      orderBy: "createdAt",
+    });
+
+    return subnames.map((subname) => subname.name || "");
+  } catch (error) {
+    console.error("Error fetching ENS subdomains:", error);
+    return [];
+  }
+}
+
+export async function getAllOwnedENSDomains(
+  address: string
+): Promise<string[]> {
+  const ens = createSharedEnsClient();
+  const allNames: string[] = [];
+
+  try {
+    const ownedNames = await ens.getNamesForAddress({
+      address: address as `0x${string}`,
+    });
+
+    allNames.push(...ownedNames.map((name) => name.name || ""));
+
+    const primaryDomains = await getUserENSDomains(address);
+
+    const subdomainPromises = primaryDomains.map((domain) =>
+      getENSSubdomains(domain)
+    );
+    const subdomains = await Promise.all(subdomainPromises);
+
+    return [...new Set([...allNames, ...primaryDomains, ...subdomains.flat()])];
+  } catch (error) {
+    console.error("Error fetching all ENS domains:", error);
+    return [];
+  }
+}
