@@ -1,6 +1,6 @@
 # AIWS: The Autonomous On-chain Agent Network
 
-<center>CA: hMqjUNgePRaRaFcvMh7WxMbmuBMBKQEubmruxwopump</center>
+<p align="center">CA: hMqjUNgePRaRaFcvMh7WxMbmuBMBKQEubmruxwopump</p>
 
 ![Banner Animation](./assets/BannerAni.gif)
 
