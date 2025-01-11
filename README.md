@@ -39,7 +39,7 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 |              .eth        .sol        .sui           .bnb                     |
 |              🦄           🔥           📦             🟦                      |
 +------------------------------------------------------------------------------+
-|                                   IPFS                                       |
+|                               IPFS + Filecoin                                |
 |  Agent Metadata and Memory                  +--------------------------------+
 |  Integrated with decentralized storage      |            Plugins             |
 |  and retrieval for transparency             |    - Wallets                   |
