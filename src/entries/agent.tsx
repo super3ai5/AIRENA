@@ -7,7 +7,7 @@ import { ConfigProvider } from "antd";
 import ReactDOM from "react-dom/client";
 import AIAgent from "../pages/AIAgent";
 
-import "antd/dist/reset.css";
+// import "antd/dist/reset.css";
 import "../index.less";
 
 /**

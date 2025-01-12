@@ -3,7 +3,7 @@
  */
 
 import OpenAI from "openai";
-import { decryptApiKey } from "./upload";
+import { decryptApiKey } from "@/utils";
 
 /**
  * Declare global window.aiData type

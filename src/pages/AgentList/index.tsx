@@ -3,9 +3,9 @@
  * Displays a list of AI agents and provides functionality to create new agents
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Avatar, Button, Table, Drawer, Space, message, Tooltip } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import { useConnect, useAccount, useDisconnect, useSignMessage } from "wagmi";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import {
@@ -15,22 +15,21 @@ import {
 } from "@ant-design/icons";
 import Publish from "../Publish";
 import "./index.less";
-import axios from "axios";
 import { AxiosError } from "axios";
 import WalletConnect from "@/components/WalletConnect";
 import logo from "@/assets/images/logo.jpg";
+import { getAllRecords, IRecord } from "@/services/upload";
+import githubLogo from "@/assets/images/icon-github.png";
 
-/**
- * Interface for AI Agent data
- */
-interface Agent {
+interface IContractHistoryRow {
   id: string;
   name: string;
   avatar: string;
   description: string;
   did: string;
-  ipfsHash?: string;
-  address?: string;
+  timestamp: number;
+  ipfsHash: string;
+  address: string;
 }
 
 /**
@@ -39,37 +38,6 @@ interface Agent {
 interface ConnectError extends Error {
   message: string;
 }
-
-// Constants for local storage and authentication
-const STORAGE_KEY = "glitter_agents";
-const AUTH_API = "https://api.social.glitterprotocol.app/v1/login_or_register";
-
-/**
- * Retrieve agents from local storage
- * @returns Array of stored agents
- */
-const getLocalAgents = (): Agent[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (err) {
-    console.error("Failed to load agents:", err);
-    return [];
-  }
-};
-
-/**
- * Save agents to local storage
- * @param agents Array of agents to save
- */
-const saveLocalAgents = (agents: Agent[]) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(agents));
-  } catch (err) {
-    console.error("Failed to save agents:", err);
-    message.error("Failed to save agent");
-  }
-};
 
 /**
  * Create authentication message with timestamp
@@ -93,7 +61,10 @@ const AgentList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [signing, setSigning] = useState(false);
-  const [agents, setAgents] = useState<Agent[]>(getLocalAgents());
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [agents, setAgents] = useState<IContractHistoryRow[]>([]);
 
   // Wallet connection hooks
   const { address, isConnected } = useAccount();
@@ -106,6 +77,41 @@ const AgentList: React.FC = () => {
   });
   const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
+
+  const fetchRecords = async (page: number, size: number): Promise<void> => {
+    try {
+      setLoading(true);
+      const { total, records } = await getAllRecords(page, size);
+      const formattedAgents: IContractHistoryRow[] = records.map(
+        (record: IRecord, index: number) => ({
+          id: `${record.creator_address}-${index}`,
+          name: record.agent_name,
+          avatar: record.avatar,
+          timestamp: record.timestamp,
+          description: record.agent_intro,
+          did: record.did,
+          ipfsHash: record.contenthash,
+          address: record.creator_address,
+        })
+      );
+      setTotal(total);
+      setAgents(formattedAgents);
+    } catch (error) {
+      console.error("Fetch records error:", error);
+      message.error("Failed to load agents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecords(currentPage, pageSize);
+  }, [currentPage, pageSize]);
+
+  const handleTableChange = (pagination: TablePaginationConfig) => {
+    setCurrentPage(pagination.current || 1);
+    setPageSize(pagination.pageSize || 10);
+  };
 
   /**
    * Sign message using wallet
@@ -120,7 +126,7 @@ const AgentList: React.FC = () => {
         return await signMessageAsync({ message: msg });
       } catch (err) {
         console.error("Sign message error:", err);
-        disconnect();
+        handleDisconnect();
         throw new Error("Failed to sign message");
       } finally {
         setSigning(false);
@@ -144,22 +150,9 @@ const AgentList: React.FC = () => {
 
         if (!signature) return;
 
-        const response = await axios.post(AUTH_API, {
-          address,
-          msg,
-          sign: signature,
-        });
-
-        if (response.data?.data?.Token) {
-          localStorage.setItem(
-            "Authentication-Tokens",
-            response.data.data.Token
-          );
-          localStorage.setItem("Token_address", address);
-          return response.data.data.Token;
-        }
-
-        throw new Error("Login failed");
+        localStorage.setItem("Authentication-Tokens", signature);
+        localStorage.setItem("Token_address", address);
+        return signature;
       } catch (err) {
         const error = err as Error | AxiosError;
         if (!error.message.includes("User rejected")) {
@@ -235,8 +228,7 @@ const AgentList: React.FC = () => {
         if (isConnected && address && address !== storedAddress && mounted) {
           const token = await handleLogin(address);
           if (token) {
-            const localAgents = getLocalAgents();
-            setAgents(localAgents);
+            fetchRecords(currentPage, pageSize);
             message.success("Connected successfully");
           }
         }
@@ -269,7 +261,6 @@ const AgentList: React.FC = () => {
     disconnect();
     localStorage.removeItem("Authentication-Tokens");
     localStorage.removeItem("Token_address");
-    setAgents([]);
   };
 
   /**
@@ -287,63 +278,47 @@ const AgentList: React.FC = () => {
    * Handle creation of new agent
    * @param agent New agent data
    */
-  const handleCreateAgent = (agent: Agent) => {
-    if (!address) {
-      message.error("Please connect wallet first");
-      return;
-    }
-
-    const agentWithAddress = {
-      ...agent,
-      address,
-    };
-
-    const updatedAgents = [...agents, agentWithAddress];
-    setAgents(updatedAgents);
-    saveLocalAgents(updatedAgents);
-    setDrawerOpen(false);
+  const handleCreateAgent = () => {
+    fetchRecords(currentPage, pageSize).finally(() => {
+      setDrawerOpen(false);
+    });
   };
-
-  const filteredAgents = agents
-    .filter((agent) => !agent.address || agent.address === address)
-    .sort((a, b) => b.id.localeCompare(a.id));
-
-  const latestAgentsByDid = useMemo(() => {
-    const groupedByDid = filteredAgents.reduce((acc, agent) => {
-      if (!acc[agent.did]) {
-        acc[agent.did] = agent;
-      } else if (agent.id.localeCompare(acc[agent.did].id) > 0) {
-        acc[agent.did] = agent;
-      }
-      return acc;
-    }, {} as Record<string, Agent>);
-
-    return groupedByDid;
-  }, [filteredAgents]);
 
   /**
    * Open chat with selected agent
-   * @param agentId IPFS hash of agent
+   * @param record Record to handle
    */
-  const handleChat = (agent: Agent) => {
-    const isLatest = latestAgentsByDid[agent.did]?.id === agent.id;
-    const link = isLatest
-      ? `https://${agent.did}.limo`
-      : `https://ipfs.glitterprotocol.dev/ipfs/${agent.ipfsHash}`;
-    window.open(link, "_blank");
+  const handleChat = (record: IContractHistoryRow) => {
+    const recordsWithSameDid = agents.filter(
+      (agent) => agent.did === record.did
+    );
+    const latestRecord = recordsWithSameDid.reduce((latest, current) =>
+      current.timestamp > latest.timestamp ? current : latest
+    );
+
+    if (record.timestamp === latestRecord.timestamp) {
+      window.open(`https://${record.did}.limo`, "_blank");
+    } else {
+      window.open(
+        `https://ipfs.glitterprotocol.dev/ipfs/${record.ipfsHash}`,
+        "_blank"
+      );
+    }
   };
 
   /**
    * Table columns configuration
    */
-  const columns: ColumnsType<Agent> = [
+  const columns: ColumnsType<IContractHistoryRow> = [
     {
       title: "Agent",
       dataIndex: "name",
       key: "name",
       render: (_, record) => (
         <Space>
-          <Avatar src={record.avatar} />
+          <Avatar
+            src={`https://ipfs.glitterprotocol.dev/ipfs/${record.avatar}`}
+          />
           <span>{record.name}</span>
         </Space>
       ),
@@ -364,19 +339,24 @@ const AgentList: React.FC = () => {
       title: "DID",
       dataIndex: "did",
       key: "did",
+      render: (_, record) => (
+        <a href={`https://${record.did}.limo`} target="_blank">
+          {record.did}
+        </a>
+      ),
     },
     {
-      title: "ipfsHash",
+      title: "IPFS Hash",
       dataIndex: "ipfsHash",
       key: "ipfsHash",
-      render: (ipfsHash) => {
+      render: (_) => {
         return (
           <a
-            href={`https://ipfs.glitterprotocol.dev/ipfs/${ipfsHash}`}
+            href={`https://ipfs.glitterprotocol.dev/ipfs/${_}`}
             target="_blank"
           >
-            <Tooltip title={ipfsHash}>
-              {ipfsHash.slice(0, 6)}...{ipfsHash.slice(-4)}
+            <Tooltip title={_}>
+              {_.slice(0, 6)}...{_.slice(-4)}
             </Tooltip>
           </a>
         );
@@ -403,6 +383,13 @@ const AgentList: React.FC = () => {
         <div className="logo">
           <img width={48} height={48} src={logo} alt="" />
           <h1>AIWS</h1>
+          <a
+            href="https://github.com/tedl-1990/AIWS"
+            className="github-link"
+            target="_blank"
+          >
+            <img width={16} height={16} src={githubLogo} alt="" />
+          </a>
         </div>
         <Space>
           {isConnected && (
@@ -420,18 +407,20 @@ const AgentList: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={filteredAgents}
+        dataSource={agents}
         rowKey="id"
         className="agent-table"
         loading={loading}
         pagination={{
-          defaultPageSize: 10,
-          style: {
-            margin: "16px 32px",
+          current: currentPage,
+          pageSize,
+          total: total,
+          onChange: (page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
           },
-          showSizeChanger: true,
-          showQuickJumper: true,
         }}
+        onChange={handleTableChange}
       />
 
       <Drawer

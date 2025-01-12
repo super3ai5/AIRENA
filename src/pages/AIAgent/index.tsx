@@ -12,6 +12,7 @@ import "./index.less";
 import type { GetProp } from "antd";
 import { sendMessage, getCurrentHistory } from "@/services/ai";
 import chatIcon from "@/assets/images/chat.png";
+import ReactMarkdown from "react-markdown";
 
 // Default avatar URL for the AI agent
 const AVATAR_URL =
@@ -38,8 +39,6 @@ const roles: GetProp<typeof Bubble.List, "roles"> = {
     styles: {
       content: {
         borderRadius: 16,
-        background: "#fff",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
       },
     },
     avatar: {
@@ -52,8 +51,6 @@ const roles: GetProp<typeof Bubble.List, "roles"> = {
     styles: {
       content: {
         borderRadius: 16,
-        background: "#fff",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
       },
     },
   },
@@ -150,12 +147,18 @@ const Independent: React.FC = () => {
     </div>
   );
 
+  const CustomBubble = ({ content }: { content: string }) => (
+    <div className="markdown-content">
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
+  );
+
   // Convert messages to bubble list items
   const items = messages.map(({ id, message, status }) => ({
     key: id,
     loading: status === "loading",
     role: status === "local" ? "local" : "ai",
-    content: message,
+    content: <CustomBubble content={message} />,
   }));
 
   return (

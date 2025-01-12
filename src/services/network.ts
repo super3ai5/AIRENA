@@ -1,0 +1,165 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import chainsMini from "@/const/chains_mini.json";
+import { ethers } from "ethers";
+
+export interface INetwork {
+  label: string;
+  value: ENetwork;
+  icon?: string;
+  price: number;
+  unit: string;
+  unitName: number;
+  contractAddr: string;
+}
+
+export const enum ENetwork {
+  SepoliaTest = 11155111,
+  Ethereum = 1,
+  Polygon = 137,
+  Optimism = 10,
+  BNB = 56,
+  Avalanche = 43114,
+  Arbitrum = 42161,
+  Base = 8453,
+  FileCoin = 314,
+  Mantle = 5000,
+  Scroll = 534352,
+}
+
+export const networks: INetwork[] = [
+  {
+    label: "SepoliaTest",
+    value: ENetwork.SepoliaTest,
+    price: 0.01,
+    unit: "ETH",
+    unitName: 18,
+    contractAddr: "0x392d2f87e2469e21d7617bf0fcb18829c045cfb9",
+  },
+  {
+    label: "Ethereum",
+    value: ENetwork.Ethereum,
+    price: 0.01,
+    unit: "ETH",
+    unitName: 18,
+    // https://etherscan.io/address/0x29e78bfd54c15c811bdd6560c10215c0ef687966
+    contractAddr: "0xa932ba4a7c2cfa350554244e5a5d3f9493c3ba30",
+  },
+];
+
+export const switchNetworkMetaMask = async (
+  chainId: number,
+  sdk: ethers.providers.Provider
+): Promise<{
+  status: boolean;
+  message?: string;
+}> => {
+  const networkChainId = Number(chainId);
+
+  if (sdk) {
+    try {
+      const nowChainId = await sdk.getNetwork();
+
+      if (networkChainId !== Number(nowChainId)) {
+        const chainId = chainIdNumberToHex(networkChainId);
+
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId }],
+        });
+        return {
+          status: true,
+        };
+      }
+      return {
+        status: true,
+        message: "Network already selected",
+      };
+    } catch (error: any) {
+      console.error("Switching network:", error);
+      const errroCode = [4902, -32603];
+      // https://docs.metamask.io/wallet/reference/wallet_switchethereumchain/
+      // 4902	Unrecognized chain ID. Try adding the chain using wallet_addEthereumChain first.
+      // IN MetaMask Application:
+      // -32603	Unrecognized chain ID. Try adding the chain using wallet_addEthereumChain first.
+      if (error && errroCode.includes(error.code)) {
+        const res = await addNetworkMetaMask(networkChainId, sdk);
+        return {
+          status: res,
+          message:
+            "Unrecognized chain ID. Try adding the chain using wallet_addEthereumChain first.",
+        };
+      } else {
+        let chainInfo: any = null;
+        chainsMini.forEach((item) => {
+          if (item.chainId === networkChainId) {
+            chainInfo = item;
+          }
+        });
+        return {
+          status: false,
+          message: `Please connect to ${chainInfo?.name}, chainID: ${chainInfo?.chainId}`,
+        };
+        // message.info(`Please connect to ${chainInfo?.name}, chainID: ${chainInfo?.chainId}`);
+        // return false;
+      }
+    }
+  } else {
+    // console.error('MetaMask not detected.');
+    return {
+      status: false,
+      message: "MetaMask not detected.",
+    };
+  }
+};
+
+export const chainIdNumberToHex = (chainId: number) => {
+  return `0x${chainId.toString(16)}`;
+};
+
+export const addNetworkMetaMask = async (
+  chainId: number,
+  sdk: any
+): Promise<boolean> => {
+  const networkChainId = Number(chainId);
+
+  let chainInfo: any = null;
+  chainsMini.forEach((item) => {
+    if (item.chainId === networkChainId) {
+      chainInfo = item;
+    }
+  });
+
+  try {
+    if (chainInfo) {
+      const chainId = chainIdNumberToHex(networkChainId);
+      const params = {
+        chainId,
+        chainName: chainInfo.name,
+        nativeCurrency: chainInfo.nativeCurrency,
+        rpcUrls: chainInfo.rpc,
+        blockExplorerUrls:
+          chainInfo.faucets && chainInfo.faucets.length > 0
+            ? chainInfo.faucets
+            : null,
+      };
+      try {
+        const res = await sdk.request({
+          method: "wallet_addEthereumChain",
+          params: [params],
+        });
+        console.log("adding res: ", res);
+        return true;
+      } catch (error: any) {
+        console.warn("Adding network:", error);
+        return false;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.log(
+      "🚀 ~ file: metaMask.ts:78 ~ switchNetworkMetaMask ~ error",
+      error
+    );
+    return false;
+  }
+};

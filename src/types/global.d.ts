@@ -1,4 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface Window {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ethereum?: any;
-} 
+}
+/**
+ * Extend Window interface to include ethereum property
+ */
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}

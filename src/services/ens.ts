@@ -4,6 +4,7 @@ import { encode } from "@ensdomains/content-hash";
 import { createEnsPublicClient } from "@ensdomains/ensjs";
 import { mainnet } from "viem/chains";
 import { http } from "viem";
+import { switchNetworkMetaMask } from "./network";
 
 // Mainnet configuration
 const MAINNET_CHAIN_ID = 1;
@@ -23,19 +24,6 @@ const RESOLVER_ABI = [
   "function contenthash(bytes32 node) public view returns (bytes)",
 ];
 
-// Switch to mainnet
-async function switchToMainnet() {
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: `0x${MAINNET_CHAIN_ID.toString(16)}` }],
-    });
-  } catch (error) {
-    console.error("Failed to switch network:", error);
-    throw new Error("Please switch to Ethereum mainnet manually");
-  }
-}
-
 export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
   try {
     if (!window.ethereum) {
@@ -48,7 +36,7 @@ export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
     // Check and switch network
     const network = await provider.getNetwork();
     if (network.chainId !== MAINNET_CHAIN_ID) {
-      await switchToMainnet();
+      await switchNetworkMetaMask(MAINNET_CHAIN_ID, provider);
     }
 
     await provider.send("eth_requestAccounts", []);
@@ -91,15 +79,6 @@ export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
     if (!contentReceipt.status) {
       throw new Error("Failed to set content hash");
     }
-
-    // // Set DID record
-    // console.log("Setting DID record:", did);
-    // const didTx = await resolverContract.setText(namehash, "did", did);
-    // console.log("DID transaction:", didTx.hash);
-    // const didReceipt = await didTx.wait();
-    // if (!didReceipt.status) {
-    //   throw new Error("Failed to set DID record");
-    // }
 
     return true;
   } catch (error) {

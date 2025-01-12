@@ -1,73 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError } from "axios";
-import type { RcFile } from "antd/es/upload";
 import { message } from "antd";
 import { ethers } from "ethers";
-
-/**
- * Encrypt API key using XOR cipher
- * @param apiKey Original API key to encrypt
- * @returns Base64 encoded encrypted string
- */
-export const encryptApiKey = (apiKey: string): string => {
-  try {
-    const key = "glitter-protocol";
-    let result = "";
-    for (let i = 0; i < apiKey.length; i++) {
-      const charCode = apiKey.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-      result += String.fromCharCode(charCode);
-    }
-    return btoa(encodeURIComponent(result));
-  } catch (error) {
-    console.error("Encryption error:", error);
-    return apiKey;
-  }
-};
-
-/**
- * Decrypt encrypted API key
- * @param encryptedKey Base64 encoded encrypted key
- * @returns Original decrypted API key
- */
-export const decryptApiKey = (encryptedKey: string): string => {
-  if (!encryptedKey) return "";
-  
-  try {
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(encryptedKey)) {
-      throw new Error("Invalid Base64 format");
-    }
-
-    const decoded = atob(encryptedKey);
-    const decodedStr = decodeURIComponent(decoded);
-    const key = "glitter-protocol";
-    let result = "";
-    
-    for (let i = 0; i < decodedStr.length; i++) {
-      const charCode = decodedStr.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-      result += String.fromCharCode(charCode);
-    }
-    
-    return result;
-  } catch (error) {
-    console.error("Decryption error:", error);
-    return "";
-  }
-};
-
-/**
- * Extend Window interface to include ethereum property
- */
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ethereum?: any;
-  }
-}
+import { UPLOAD_ABI } from "@/abis/uploadAbi";
+import { importer, ImportCandidate } from "ipfs-unixfs-importer";
+import {
+  ENetwork,
+  INetwork,
+  networks,
+  switchNetworkMetaMask,
+} from "@/services/network";
+import { decryptApiKey, readFileAsUint8Array } from "@/utils";
 
 // Glitter IPFS API endpoint
-const glitterEndpoint = "https://ipfs.glitterprotocol.dev/api/v0";
-
-// Authentication API endpoint
-const AUTH_API = "https://api.social.glitterprotocol.app/v1/login_or_register";
+const GLITTER_IPFS_API_URL = "https://ipfs.glitterprotocol.dev/api/v0";
+const MAINNET_RPC = "https://rpc.ankr.com/eth";
 
 /**
  * Interface for IPFS upload response
@@ -80,7 +27,7 @@ interface IUploadRes {
 /**
  * Interface for AI agent data
  */
-interface AgentData {
+export interface IAgentData {
   name: string;
   functionDesc: string;
   behaviorDesc: string;
@@ -89,94 +36,104 @@ interface AgentData {
   id?: string;
 }
 
-/**
- * Create authentication message with timestamp
- * @param address Wallet address
- * @returns Message and timestamp
- */
-const createMessage = (address: string) => {
-  const timestamp = Math.floor(new Date().getTime() / 1000);
-  const msg = `Message:
+interface IFile {
+  filename: string;
+  contenthash: string;
+  filesize: number;
+  timestamp: number;
+}
 
-upload and deploy project
+export interface IRecord {
+  filename: string;
+  contenthash: string;
+  timestamp: number;
+  did: string;
+  creator_address: string;
+  agent_name: string;
+  agent_intro: string;
+  avatar: string;
+}
 
-Wallet address:
-${address}
-
-Nonce:
-${timestamp}
-`;
-  return { msg, timestamp };
-};
-
-/**
- * Sign message using MetaMask
- * @param msg Message to sign
- * @returns Signed message
- */
-const signMessage = async (msg: string) => {
-  if (!window.ethereum) {
-    throw new Error("MetaMask not found");
-  }
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
-  return await signer.signMessage(msg);
-};
-
-/**
- * Login or register user with wallet
- * @param address Wallet address
- * @returns Authentication token
- */
-const loginOrRegister = async (address: string) => {
-  try {
-    const { msg } = createMessage(address);
-    const sign = await signMessage(msg);
-
-    const response = await axios.post(AUTH_API, {
-      address,
-      msg,
-      sign,
-    });
-
-    if (response.data?.data?.Token) {
-      localStorage.setItem("Authentication-Tokens", response.data.data.Token);
-      localStorage.setItem("Token_address", address);
-      return response.data.data.Token;
-    }
-
-    throw new Error("Login failed");
-  } catch (err) {
-    const error = err as Error | AxiosError;
-    console.error("Login error:", error);
-    throw new Error(
-      `Login failed: ${
-        error instanceof AxiosError
-          ? error.response?.data?.message || error.message
-          : error.message
-      }`
-    );
-  }
-};
-
-/**
- * Check authentication status and login if needed
- */
-const checkAuth = async () => {
-  const token = localStorage.getItem("Authentication-Tokens");
-  const address = localStorage.getItem("Token_address");
-
-  if (!token || !address) {
-    if (!window.ethereum) {
-      message.error("Please install MetaMask first");
-      throw new Error("MetaMask not found");
-    }
-
+const getProvider = async (needSigner = false) => {
+  if (needSigner) {
+    if (!window.ethereum) throw new Error("MetaMask not found");
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
+    const network = await provider.getNetwork();
+    if (network.chainId === ENetwork.Ethereum) {
+      await switchNetworkMetaMask(ENetwork.Ethereum, provider);
+    }
+    return provider;
+  }
 
-    await loginOrRegister(address);
+  if (window.ethereum) {
+    return new ethers.providers.Web3Provider(window.ethereum);
+  }
+
+  return new ethers.providers.JsonRpcProvider(MAINNET_RPC);
+};
+
+export const getAllRecords = async (
+  pageNum: number,
+  pageSize: number
+): Promise<{ total: number; records: IRecord[] }> => {
+  try {
+    const provider = await getProvider();
+    const network = await provider.getNetwork();
+    console.log(network.chainId, " network.chainId");
+    const contractAddress = networks.find(
+      (item: INetwork) => item.value === network.chainId
+    )?.contractAddr;
+    if (!contractAddress) throw new Error("Contract address not found");
+    const contract = new ethers.Contract(contractAddress, UPLOAD_ABI, provider);
+
+    try {
+      const count = await contract.getRecordCount();
+      const length = count.toNumber();
+      if (length === 0) {
+        return {
+          total: 0,
+          records: [],
+        };
+      }
+      // get all records
+      const records = await contract.fetchData(0, length);
+
+      console.log("Raw records:", records);
+
+      // pagination
+      const startIndex = (pageNum - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedRecords = records;
+
+      // format records
+      const formattedRecords: IRecord[] = paginatedRecords
+        .map((record: any) => ({
+          did: record.ensName,
+          contenthash: record.contenthash,
+          timestamp: record.timestamp.toNumber(),
+          creator_address: record.creator_address,
+          avatar: record.avatarContentHash,
+          agent_name: record.agent_name,
+          agent_intro: record.agent_intro,
+        }))
+        .sort((a: IRecord, b: IRecord) => b.timestamp - a.timestamp)
+        .slice(startIndex, endIndex);
+
+      console.log("Formatted records:", formattedRecords);
+      return {
+        total: length,
+        records: formattedRecords,
+      };
+    } catch (error) {
+      console.error("Contract call error:", error);
+      throw new Error("Failed to fetch records from contract");
+    }
+  } catch (error) {
+    console.error("Get records error:", error);
+    message.error(
+      error instanceof Error ? error.message : "Failed to get records"
+    );
+    throw error;
   }
 };
 
@@ -187,24 +144,23 @@ const checkAuth = async () => {
  * @returns Upload response
  */
 const uploadToGlitter = async (
-  file: File | Blob,
+  fileList: File[],
+  txId: string,
+  chainId: string,
   onProgress?: (percent: number) => void
 ): Promise<IUploadRes> => {
   try {
-    await checkAuth();
-
     const formData = new FormData();
-    formData.append("file", file);
+    fileList.forEach((file) => {
+      formData.append(`files[${file.name}]`, file);
+    });
 
-    const response = await axios.post<{ data: IUploadRes[] }>(
-      `${glitterEndpoint}/add`,
+    const { data } = await axios.post(
+      `${GLITTER_IPFS_API_URL}/upagent?tx_id=${txId}&chainid=${chainId}`,
       formData,
       {
         headers: {
           "Content-Type": "multipart/form-data",
-          "Authentication-Tokens":
-            localStorage.getItem("Authentication-Tokens") || "",
-          Token_address: localStorage.getItem("Token_address") || "",
         },
         onUploadProgress(progressEvent) {
           const { loaded, total } = progressEvent;
@@ -213,11 +169,15 @@ const uploadToGlitter = async (
       }
     );
 
-    if (!response.data.data?.[0]) {
+    if (!data.data?.[0]) {
       throw new Error("Upload failed: No response data");
     }
-
-    return response.data.data[0];
+    console.log(data.data, "data.data");
+    const item = data.data.find((item: any) => !item.Name.includes("/"));
+    return {
+      Hash: item.Hash,
+      Size: item.Size,
+    };
   } catch (err) {
     const error = err as Error | AxiosError;
     console.error("Upload error:", error);
@@ -234,60 +194,199 @@ const uploadToGlitter = async (
   }
 };
 
+export const ipfsUnixfsImporterBlock = {
+  blocks: new Map(),
+  get: async (cid: any) => {
+    const bytes = ipfsUnixfsImporterBlock.blocks.get(cid.toString());
+    if (!bytes) throw new Error(`block not found: ${cid}`);
+    return bytes;
+  },
+  put: async (bytes: Uint8Array) => {
+    const cid = await bytes;
+    ipfsUnixfsImporterBlock.blocks.set(cid.toString(), bytes);
+    return cid;
+  },
+};
+
+const createAvatarCid = async (file: File) => {
+  const avatarCid = [];
+  const { content: uint8Array } = await readFileAsUint8Array(file);
+
+  let fileCid: any = "";
+  const source: ImportCandidate[] = [{ content: uint8Array }];
+  for await (const entry of importer(source, ipfsUnixfsImporterBlock, {
+    cidVersion: 0,
+    onlyHash: true,
+  })) {
+    fileCid = entry.cid;
+  }
+
+  avatarCid.push({
+    name: file.name,
+    size: file.size,
+    cid: fileCid.toString(),
+  });
+
+  return avatarCid;
+};
+
+/**
+ * Create HTML file from content
+ * @param content HTML content string
+ * @returns HTML File object
+ */
+const createHtmlFile = async (content: string): Promise<File> => {
+  try {
+    const blob = new Blob([content], { type: "text/html" });
+    const file = new File([blob], "index.html", {
+      type: "text/html",
+      lastModified: Date.now(),
+    });
+
+    return file;
+  } catch (error) {
+    console.error("Create HTML file error:", error);
+    throw error;
+  }
+};
+
+const uploadFolderToIPFS = async (dirFileList: File[]) => {
+  const list: IFile[] = [];
+  const folderName = `agent_${Date.now()}`;
+
+  const sourcePromises = dirFileList.map(async (file) => {
+    const content = await readFileAsUint8Array(file);
+    return {
+      path: `${folderName}/${file.name}`,
+      content: content.content,
+    } as ImportCandidate;
+  });
+
+  const source = await Promise.all(sourcePromises);
+  console.log("Source:", source);
+
+  for await (const entry of importer(source, ipfsUnixfsImporterBlock, {
+    cidVersion: 0,
+    onlyHash: true,
+    wrapWithDirectory: true,
+  })) {
+    console.log("Entry:", entry);
+    const data = {
+      filename: entry.path || "",
+      contenthash: entry.cid.toString(),
+      filesize: entry.size,
+      timestamp: Date.now(),
+    };
+    console.log("Data:", data);
+    list.push(data);
+  }
+
+  return list;
+};
+
+/**
+ * upload file params
+ */
+interface IRecordDataParam {
+  contenthash: string;
+  timestamp: number;
+  agent_name: string;
+  agent_intro: string;
+  ensName: string;
+  avatarContentHash: string;
+}
+
+interface IUploadData {
+  name: string;
+  avatar: File;
+  functionDesc: string;
+  behaviorDesc: string;
+  did: string;
+}
+
 /**
  * Upload content to IPFS
  * @param content Content to upload
  * @param onProgress Progress callback
  * @returns IPFS hash
  */
-export const uploadToIPFS = async (
-  content: string,
+export const uploadToIPFSByContract = async (
+  formData: IUploadData,
   onProgress?: (percent: number) => void
-): Promise<string> => {
-  const blob = new Blob([content], { type: "text/html" });
-  const result = await uploadToGlitter(blob, onProgress);
-  return result.Hash || "";
-};
+): Promise<{ htmlHash: string; avatarHash: string }> => {
+  try {
+    const provider = await getProvider(true);
+    const signer = provider.getSigner();
+    const network = await provider.getNetwork();
+    const contractAddress = networks.find(
+      (item: INetwork) => item.value === network.chainId
+    )?.contractAddr;
+    if (!contractAddress) throw new Error("Contract address not found");
+    const contract = new ethers.Contract(contractAddress, UPLOAD_ABI, signer);
 
-/**
- * Convert base64 string to Blob
- * @param base64 Base64 string
- * @returns Blob object
- */
-const base64ToBlob = (base64: string): Blob => {
-  const parts = base64.split(";base64,");
-  const contentType = parts[0].split(":")[1];
-  const raw = window.atob(parts[1]);
-  const rawLength = raw.length;
-  const uInt8Array = new Uint8Array(rawLength);
+    const avatarCid = await createAvatarCid(formData.avatar);
+    console.log("Avatar CID:", avatarCid);
 
-  for (let i = 0; i < rawLength; ++i) {
-    uInt8Array[i] = raw.charCodeAt(i);
+    const htmlContent = generateHTML({
+      name: formData.name,
+      avatar: avatarCid[0].cid,
+      functionDesc: formData.functionDesc,
+      behaviorDesc: formData.behaviorDesc,
+      did: formData.did,
+    });
+
+    const htmlFile = await createHtmlFile(htmlContent);
+    console.log("HTML File:", htmlFile);
+    const fileList = [htmlFile, formData.avatar];
+    const dirFileList = await createFolderWithFiles(fileList);
+    console.log(dirFileList, "dirFileList");
+    const ipfsHashCids = await uploadFolderToIPFS(fileList);
+
+    console.log(ipfsHashCids, "ipfsHashCids");
+    const findCid = ipfsHashCids.find(
+      (item: IFile) => !item.filename.includes("/")
+    );
+    console.log(findCid, "findCid");
+    const data: IRecordDataParam = {
+      contenthash: findCid ? findCid.contenthash : "",
+      timestamp: Date.now(),
+      agent_name: formData.name,
+      agent_intro: formData.functionDesc,
+      ensName: formData.did,
+      avatarContentHash: avatarCid[0].cid,
+    };
+    const price = await contract.priceEth();
+    console.log("Price:", price.toString());
+    console.log(data, "data");
+
+    const tx = await contract.recordData(
+      data.contenthash,
+      data.timestamp,
+      data.agent_name,
+      data.agent_intro,
+      data.ensName,
+      data.avatarContentHash,
+      {
+        value: price,
+        gasLimit: 500000,
+      }
+    );
+
+    const receipt = await tx.wait();
+    const glitterHash = await uploadToGlitter(
+      dirFileList,
+      receipt.transactionHash,
+      network.chainId.toString(),
+      onProgress
+    );
+    return {
+      htmlHash: glitterHash.Hash,
+      avatarHash: avatarCid[0].cid,
+    };
+  } catch (error: any) {
+    console.error("Contract error:", error);
+    throw error;
   }
-
-  return new Blob([uInt8Array], { type: contentType });
-};
-
-/**
- * Upload avatar to IPFS
- * @param base64OrFile Base64 string or RcFile object
- * @param onProgress Progress callback
- * @returns IPFS hash
- */
-export const uploadAvatar = async (
-  base64OrFile: string | RcFile,
-  onProgress?: (percent: number) => void
-): Promise<string> => {
-  let file: Blob;
-
-  if (typeof base64OrFile === "string") {
-    file = base64ToBlob(base64OrFile);
-  } else {
-    file = base64OrFile;
-  }
-
-  const result = await uploadToGlitter(file, onProgress);
-  return result.Hash || "";
 };
 
 /**
@@ -295,7 +394,7 @@ export const uploadAvatar = async (
  * @param data Agent data
  * @returns Generated HTML string
  */
-export const generateHTML = (data: AgentData) => {
+export const generateHTML = (data: IAgentData) => {
   const avatarUrl =
     typeof data.avatar === "string" && data.avatar
       ? data.avatar.startsWith("http")
@@ -303,8 +402,9 @@ export const generateHTML = (data: AgentData) => {
         : `https://ipfs.glitterprotocol.dev/ipfs/${data.avatar}`
       : "";
 
-  const testKey = "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";
-  const encryptedTestKey = encryptApiKey(testKey);
+  const TEST_API_KEY = decryptApiKey(
+    "JTE0JTA3RCUxQiUwNkglMDQlMUMlNURCWSU0MFZSWlUlMDJZWCU0MCUxMiUwM0clMUFJRiU1Qk0lMEIlMDUlMDlYJTAyWlpMRVdGJTE0JTE1QiU1REMlMEUlMDFYJTBEVVElMEElNUQlMTBFJTAxJTQwJTFGJTE0"
+  );
 
   return `
 <!DOCTYPE html>
@@ -322,9 +422,9 @@ export const generateHTML = (data: AgentData) => {
         functionDesc: data.functionDesc,
         behaviorDesc: data.behaviorDesc,
         did: data.did,
-        id: data.id,
+        id: Date.now(),
         avatar: avatarUrl,
-        apiKey: encryptedTestKey,
+        apiKey: TEST_API_KEY,
       },
       null,
       2
@@ -338,4 +438,45 @@ export const generateHTML = (data: AgentData) => {
 </body>
 </html>
   `.trim();
+};
+
+const createFolderWithFiles = async (fileList: File[]): Promise<File[]> => {
+  try {
+    const timestamp = Date.now();
+    const folderName = `agent_${timestamp}`;
+    const dirFileList: File[] = [];
+
+    const folderMetadata = {
+      timestamp,
+      files: fileList.map((file) => ({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      })),
+    };
+
+    const folder = new Blob([JSON.stringify(folderMetadata)], {
+      type: "application/x-directory",
+    });
+
+    const folderFile = new File([folder], folderName, {
+      type: "application/x-directory",
+      lastModified: timestamp,
+    });
+    dirFileList.push(folderFile);
+
+    // add files to folder
+    fileList.forEach((file) => {
+      const newFile = new File([file], `${folderName}/${file.name}`, {
+        type: file.type,
+        lastModified: timestamp,
+      });
+      dirFileList.push(newFile);
+    });
+
+    return dirFileList;
+  } catch (error) {
+    console.error("Create folder error:", error);
+    throw error;
+  }
 };

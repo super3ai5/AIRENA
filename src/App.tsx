@@ -4,6 +4,13 @@ import AgentList from "./pages/AgentList";
 import { WagmiConfig, createConfig, configureChains, mainnet } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { ConfigProvider, theme } from "antd";
+import { message } from "antd";
+
+message.config({
+  maxCount: 1,
+  top: 24,
+  duration: 3
+});
 
 const { publicClient, webSocketPublicClient } = configureChains(
   [mainnet],

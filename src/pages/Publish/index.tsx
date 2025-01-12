@@ -1,16 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * AI Agent Publication Component
  * Allows users to create and publish new AI agents
  */
 
-import React from "react";
-import { Form, Input, Upload, Button, message, Select, Spin } from "antd";
+import React, { useState } from "react";
+import {
+  Form,
+  Input,
+  Upload,
+  Button,
+  message,
+  Select,
+  Spin,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import type { RcFile } from "antd/es/upload";
+import type { RcFile } from "antd/es/upload/interface";
+import { ethers } from "ethers";
 import "./index.less";
-import { uploadToIPFS, generateHTML, uploadAvatar } from "@/services/upload";
+import { uploadToIPFSByContract } from "@/services/upload";
 import { setEnsRecord, getAllOwnedENSDomains } from "@/services/ens";
+import { ENetwork } from "@/services/network";
 import { useAccount } from "wagmi";
 
 const { TextArea } = Input;
@@ -20,31 +31,26 @@ const { TextArea } = Input;
  */
 interface FormValues {
   name: string;
-  avatar?: string;
   functionDesc: string;
   behaviorDesc: string;
   did: string;
 }
 
 /**
- * Agent data interface
- */
-interface Agent {
-  id: string;
-  name: string;
-  avatar: string;
-  description: string;
-  did: string;
-  ipfsHash: string;
-  address: string;
-}
-
-/**
  * Props interface for Publish component
  */
 interface PublishProps {
-  onSuccess: (agent: Agent) => void;
+  onSuccess: () => void;
 }
+
+const STEPS = {
+  PREPARING: "Preparing files...",
+  UPLOADING_AVATAR: "Uploading avatar...",
+  CREATING_AGENT: "Creating Agent...",
+  UPLOADING_FILES: "Uploading files...",
+  CONFIRMING: "Confirming transaction...",
+  COMPLETED: "Completed!",
+};
 
 /**
  * Publish component for creating new AI agents
@@ -52,77 +58,67 @@ interface PublishProps {
 const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
   // Form and state management
   const [form] = Form.useForm<FormValues>();
-  const [avatarHash, setAvatarHash] = React.useState<string>("");
+  const [avatarFile, setAvatarFile] = useState<RcFile>();
   const [submitting, setSubmitting] = React.useState(false);
+  const [currentStep, setCurrentStep] = useState("");
   const { address } = useAccount();
   const [ensDomains, setEnsDomains] = React.useState<string[]>([]);
   const [loadingDomains, setLoadingDomains] = React.useState(false);
+  const [imageUrl, setImageUrl] = useState<string>();
 
   /**
    * Validate and upload avatar before adding to form
    */
-  const beforeUpload = async (file: RcFile): Promise<boolean> => {
-    try {
-      // Validate file type
-      const isJpgOrPng =
-        file.type === "image/jpeg" || file.type === "image/png";
-      if (!isJpgOrPng) {
-        message.error("You can only upload JPG/PNG files!");
-        return false;
-      }
-
-      // Validate file size
-      const isLt1M = file.size / 1024 / 1024 < 1;
-      if (!isLt1M) {
-        message.error("Image must be smaller than 1MB!");
-        return false;
-      }
-
-      // Upload to IPFS
-      const ipfsHash = await uploadAvatar(file);
-      setAvatarHash(ipfsHash);
-      form.setFieldsValue({ avatar: ipfsHash });
-      await form.validateFields(["avatar"]);
-
-      return false;
-    } catch (err) {
-      const error = err as Error;
-      message.error("Upload failed, please try again");
-      console.error("Upload error:", error.message);
+  const beforeUpload = (file: RcFile): boolean => {
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
+    if (!isJpgOrPng) {
+      message.error("You can only upload JPG/PNG files!");
       return false;
     }
+
+    const isLt1M = file.size / 1024 / 1024 < 1;
+    if (!isLt1M) {
+      message.error("Image must be smaller than 1MB!");
+      return false;
+    }
+
+    setAvatarFile(file);
+    getBase64(file, setImageUrl);
+    return false;
   };
 
-  /**
-   * Handle form submission and agent creation
-   */
   const onFinish = async (values: FormValues) => {
     try {
       setSubmitting(true);
-      if (!address) {
-        message.error("Please connect wallet first");
+      setCurrentStep(STEPS.PREPARING);
+
+      if (!avatarFile) {
+        message.error("Please upload an avatar!");
         return;
       }
 
-      // Generate HTML content
-      const htmlContent = generateHTML({
+      const data = {
         name: values.name,
-        avatar: avatarHash,
+        avatar: avatarFile,
         functionDesc: values.functionDesc,
         behaviorDesc: values.behaviorDesc,
         did: values.did,
-      });
+      };
 
-      // Upload HTML to IPFS
-      const ipfsHash = await uploadToIPFS(htmlContent);
-      console.log(ipfsHash, "ipfsHash");
-      console.log(values.did, "values.did");
+      setCurrentStep(STEPS.CREATING_AGENT);
+      const { htmlHash } = await uploadToIPFSByContract(data);
 
+      setCurrentStep(STEPS.UPLOADING_FILES);
       // Set ENS records if DID is an ENS domain
       try {
-        await setEnsRecord(values.did, ipfsHash);
-        message.success("ENS records updated successfully");
-      } catch (error) {
+        const chainId = ethers.BigNumber.from(
+          window.ethereum?.chainId
+        ).toNumber();
+        if (chainId === ENetwork.Ethereum) {
+          await setEnsRecord(values.did, htmlHash);
+          message.success("ENS records updated successfully");
+        }
+      } catch (error: any) {
         console.error("Failed to set ENS records:", error);
         if (error instanceof Error) {
           message.error(`Failed to update ENS records: ${error.message}`);
@@ -133,30 +129,16 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
         return;
       }
 
-      // Create Agent object
-      const agent: Agent = {
-        id: ipfsHash,
-        name: values.name,
-        avatar: avatarHash
-          ? `https://ipfs.glitterprotocol.dev/ipfs/${avatarHash}`
-          : "",
-        description: values.functionDesc,
-        did: values.did,
-        address: address || "",
-        ipfsHash,
-      };
-
-      onSuccess(agent);
+      onSuccess();
       message.success("Agent created successfully");
       form.resetFields();
-      setAvatarHash("");
+      setAvatarFile(undefined);
+      setImageUrl(undefined);
+      setCurrentStep("");
     } catch (error) {
       console.error("Error creating agent:", error);
-      if (error instanceof Error) {
-        message.error(`Failed to create agent: ${error.message}`);
-      } else {
-        message.error("Failed to create agent");
-      }
+      message.error("Failed to create agent");
+      setCurrentStep("");
     } finally {
       setSubmitting(false);
     }
@@ -190,8 +172,22 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
 
   const handleReset = () => {
     form.resetFields();
-    setAvatarHash("");
+    setAvatarFile(undefined);
+    setImageUrl(undefined);
     setLoadingDomains(false);
+  };
+
+  const uploadButton = (
+    <div>
+      <UploadOutlined />
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </div>
+  );
+
+  const getBase64 = (img: RcFile, callback: (url: string) => void) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => callback(reader.result as string));
+    reader.readAsDataURL(img);
   };
 
   return (
@@ -211,7 +207,12 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
             { max: 50, message: "Agent Name cannot exceed 50 characters!" },
           ]}
         >
-          <Input placeholder="Enter Agent Name" maxLength={50} showCount />
+          <Input
+            autoComplete="off"
+            placeholder="Enter Agent Name"
+            maxLength={50}
+            showCount
+          />
         </Form.Item>
 
         <Form.Item
@@ -224,17 +225,10 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
             showUploadList={false}
             beforeUpload={beforeUpload}
           >
-            {avatarHash ? (
-              <img
-                src={`https://ipfs.glitterprotocol.dev/ipfs/${avatarHash}`}
-                alt="avatar"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
+            {imageUrl ? (
+              <img src={imageUrl} alt="avatar" style={{ width: "100%" }} />
             ) : (
-              <div>
-                <UploadOutlined />
-                <div style={{ marginTop: 8 }}>Upload</div>
-              </div>
+              uploadButton
             )}
           </Upload>
         </Form.Item>
@@ -318,7 +312,7 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
 
         <Form.Item>
           <Button type="primary" htmlType="submit" block loading={submitting}>
-            Create
+            {submitting ? currentStep || "Creating..." : "Create"}
           </Button>
         </Form.Item>
       </Form>
