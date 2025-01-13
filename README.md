@@ -1,6 +1,5 @@
 # AIWS: The Autonomous On-chain Agent Network
 
-<p align="center">CA: hMqjUNgePRaRaFcvMh7WxMbmuBMBKQEubmruxwopump</p>
 <p align="center">
 <a href="https://aiws.eth.limo">AIWS ENS AI Launcher</a><br>
 <a href="https://ainick.eth.limo">AI Nick.eth</a>
