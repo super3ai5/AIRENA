@@ -8,7 +8,7 @@ export interface INetwork {
   icon?: string;
   price: number;
   unit: string;
-  unitName: number;
+  unitName: number; 
   contractAddr: string;
 }
 
@@ -27,14 +27,14 @@ export const enum ENetwork {
 }
 
 export const networks: INetwork[] = [
-  {
-    label: "SepoliaTest",
-    value: ENetwork.SepoliaTest,
-    price: 0.01,
-    unit: "ETH",
-    unitName: 18,
-    contractAddr: "0x392d2f87e2469e21d7617bf0fcb18829c045cfb9",
-  },
+  // {
+  //   label: "SepoliaTest",
+  //   value: ENetwork.SepoliaTest,
+  //   price: 0.01,
+  //   unit: "ETH",
+  //   unitName: 18,
+  //   contractAddr: "0xb028123909eb45be96f3bec9582f67255930577d",
+  // },
   {
     label: "Ethereum",
     value: ENetwork.Ethereum,
@@ -42,7 +42,7 @@ export const networks: INetwork[] = [
     unit: "ETH",
     unitName: 18,
     // https://etherscan.io/address/0x29e78bfd54c15c811bdd6560c10215c0ef687966
-    contractAddr: "0xa932ba4a7c2cfa350554244e5a5d3f9493c3ba30",
+    contractAddr: "0x071e5993a7fa46ccaa7135ff07e840c7b9c5073c",
   },
 ];
 
@@ -99,12 +99,10 @@ export const switchNetworkMetaMask = async (
           status: false,
           message: `Please connect to ${chainInfo?.name}, chainID: ${chainInfo?.chainId}`,
         };
-        // message.info(`Please connect to ${chainInfo?.name}, chainID: ${chainInfo?.chainId}`);
-        // return false;
+    
       }
     }
   } else {
-    // console.error('MetaMask not detected.');
     return {
       status: false,
       message: "MetaMask not detected.",
@@ -143,11 +141,10 @@ export const addNetworkMetaMask = async (
             : null,
       };
       try {
-        const res = await sdk.request({
+        await sdk.request({
           method: "wallet_addEthereumChain",
           params: [params],
         });
-        console.log("adding res: ", res);
         return true;
       } catch (error: any) {
         console.warn("Adding network:", error);

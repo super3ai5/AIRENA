@@ -330,12 +330,6 @@ const AgentList: React.FC = () => {
       ellipsis: true,
     },
     {
-      title: "Model",
-      dataIndex: "model",
-      key: "model",
-      render: () => <span className="model-tag">GPT-3.5-turbo</span>,
-    },
-    {
       title: "DID",
       dataIndex: "did",
       key: "did",

@@ -14,6 +14,7 @@ import { decryptApiKey, readFileAsUint8Array } from "@/utils";
 
 // Glitter IPFS API endpoint
 const GLITTER_IPFS_API_URL = "https://ipfs.glitterprotocol.dev/api/v0";
+// RPC 
 const MAINNET_RPC = "https://rpc.ankr.com/eth";
 
 /**
@@ -54,6 +55,7 @@ export interface IRecord {
   avatar: string;
 }
 
+// get Provider
 const getProvider = async (needSigner = false) => {
   if (needSigner) {
     if (!window.ethereum) throw new Error("MetaMask not found");
@@ -79,7 +81,6 @@ export const getAllRecords = async (
   try {
     const provider = await getProvider();
     const network = await provider.getNetwork();
-    console.log(network.chainId, " network.chainId");
     const contractAddress = networks.find(
       (item: INetwork) => item.value === network.chainId
     )?.contractAddr;
@@ -98,7 +99,6 @@ export const getAllRecords = async (
       // get all records
       const records = await contract.fetchData(0, length);
 
-      console.log("Raw records:", records);
 
       // pagination
       const startIndex = (pageNum - 1) * pageSize;
@@ -115,11 +115,11 @@ export const getAllRecords = async (
           avatar: record.avatarContentHash,
           agent_name: record.agent_name,
           agent_intro: record.agent_intro,
+          optionalField: record.optionalField,
+          extension: record.extension,
         }))
         .sort((a: IRecord, b: IRecord) => b.timestamp - a.timestamp)
         .slice(startIndex, endIndex);
-
-      console.log("Formatted records:", formattedRecords);
       return {
         total: length,
         records: formattedRecords,
@@ -172,7 +172,7 @@ const uploadToGlitter = async (
     if (!data.data?.[0]) {
       throw new Error("Upload failed: No response data");
     }
-    console.log(data.data, "data.data");
+    
     const item = data.data.find((item: any) => !item.Name.includes("/"));
     return {
       Hash: item.Hash,
@@ -263,21 +263,21 @@ const uploadFolderToIPFS = async (dirFileList: File[]) => {
   });
 
   const source = await Promise.all(sourcePromises);
-  console.log("Source:", source);
+
 
   for await (const entry of importer(source, ipfsUnixfsImporterBlock, {
     cidVersion: 0,
     onlyHash: true,
     wrapWithDirectory: true,
   })) {
-    console.log("Entry:", entry);
+   
     const data = {
       filename: entry.path || "",
       contenthash: entry.cid.toString(),
       filesize: entry.size,
       timestamp: Date.now(),
     };
-    console.log("Data:", data);
+    
     list.push(data);
   }
 
@@ -294,6 +294,8 @@ interface IRecordDataParam {
   agent_intro: string;
   ensName: string;
   avatarContentHash: string;
+  extension: string;
+  optionalField: string;
 }
 
 interface IUploadData {
@@ -325,7 +327,7 @@ export const uploadToIPFSByContract = async (
     const contract = new ethers.Contract(contractAddress, UPLOAD_ABI, signer);
 
     const avatarCid = await createAvatarCid(formData.avatar);
-    console.log("Avatar CID:", avatarCid);
+   
 
     const htmlContent = generateHTML({
       name: formData.name,
@@ -336,17 +338,17 @@ export const uploadToIPFSByContract = async (
     });
 
     const htmlFile = await createHtmlFile(htmlContent);
-    console.log("HTML File:", htmlFile);
+   
     const fileList = [htmlFile, formData.avatar];
     const dirFileList = await createFolderWithFiles(fileList);
-    console.log(dirFileList, "dirFileList");
+    
     const ipfsHashCids = await uploadFolderToIPFS(fileList);
 
-    console.log(ipfsHashCids, "ipfsHashCids");
+   
     const findCid = ipfsHashCids.find(
       (item: IFile) => !item.filename.includes("/")
     );
-    console.log(findCid, "findCid");
+    
     const data: IRecordDataParam = {
       contenthash: findCid ? findCid.contenthash : "",
       timestamp: Date.now(),
@@ -354,10 +356,11 @@ export const uploadToIPFSByContract = async (
       agent_intro: formData.functionDesc,
       ensName: formData.did,
       avatarContentHash: avatarCid[0].cid,
+      extension: "{}",
+      optionalField: "{}",
     };
     const price = await contract.priceEth();
-    console.log("Price:", price.toString());
-    console.log(data, "data");
+  
 
     const tx = await contract.recordData(
       data.contenthash,
@@ -366,6 +369,8 @@ export const uploadToIPFSByContract = async (
       data.agent_intro,
       data.ensName,
       data.avatarContentHash,
+      data.extension,
+      data.optionalField,
       {
         value: price,
         gasLimit: 500000,

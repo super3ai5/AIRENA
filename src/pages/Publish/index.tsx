@@ -84,7 +84,7 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
 
     setAvatarFile(file);
     getBase64(file, setImageUrl);
-    return false;
+    return false; 
   };
 
   const onFinish = async (values: FormValues) => {
@@ -149,13 +149,11 @@ const Publish: React.FC<PublishProps> = ({ onSuccess }) => {
    */
   React.useEffect(() => {
     const fetchENSDomains = async () => {
-      console.log(address, "address");
       if (!address) return;
 
       try {
         setLoadingDomains(true);
         const ownedNames = await getAllOwnedENSDomains(address);
-        console.log(ownedNames, "ownedNames");
         if (ownedNames.length > 0) {
           setEnsDomains(ownedNames);
         }

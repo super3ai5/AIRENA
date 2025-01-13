@@ -30,7 +30,6 @@ export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
       throw new Error("MetaMask not installed");
     }
 
-    console.log("Setting ENS records for:", ensName);
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
     // Check and switch network
@@ -41,18 +40,14 @@ export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
 
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
-    const signerAddress = await signer.getAddress();
-    console.log("Signer address:", signerAddress);
 
     const namehash = ethers.utils.namehash(ensName);
-    console.log("Namehash:", namehash);
 
     // Get ENS contract instance
     const ensContract = new ethers.Contract(ENS_ADDRESS, ENS_ABI, provider);
 
     // Get Resolver address
     const resolverAddress = await ensContract.resolver(namehash);
-    console.log("Resolver address:", resolverAddress);
 
     if (!resolverAddress || resolverAddress === ethers.constants.AddressZero) {
       throw new Error("No resolver found for this ENS name");
@@ -66,15 +61,12 @@ export const setEnsRecord = async (ensName: string, ipfsHash: string) => {
     );
 
     // Set IPFS contenthash
-    console.log("Setting IPFS contenthash for:", ipfsHash);
     const contentHash = "0x" + encode("ipfs", ipfsHash);
-    console.log("Encoded contenthash:", contentHash);
 
     const contentTx = await resolverContract.setContenthash(
       namehash,
       contentHash
     );
-    console.log("Content hash transaction:", contentTx.hash);
     const contentReceipt = await contentTx.wait();
     if (!contentReceipt.status) {
       throw new Error("Failed to set content hash");
@@ -120,7 +112,6 @@ export const getUserENSDomains = async (address: string): Promise<string[]> => {
 
     const namesPromise = reverseRecords.getNames([address]);
     const names = await Promise.race([namesPromise, timeoutPromise]);
-    console.log("Names:", names);
 
     return Array.isArray(names)
       ? names.filter((name: string) => name && name !== "")

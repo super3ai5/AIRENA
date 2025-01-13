@@ -147,6 +147,7 @@ const Independent: React.FC = () => {
     </div>
   );
 
+  //
   const CustomBubble = ({ content }: { content: string }) => (
     <div className="markdown-content">
       <ReactMarkdown>{content}</ReactMarkdown>
@@ -205,10 +206,6 @@ const Independent: React.FC = () => {
           <div className="detail-item">
             <h4>Agent Description Prompt:</h4>
             <p>{window.aiData?.behaviorDesc || "N/A"}</p>
-          </div>
-          <div className="detail-item">
-            <h4>Model:</h4>
-            <p>gpt-3.5-turbo</p>
           </div>
           <div className="detail-item">
             <h4>DID:</h4>
