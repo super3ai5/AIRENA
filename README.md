@@ -1,4 +1,4 @@
-# AIWS: The Autonomous On-chain Agent Network
+# AIWS: The DeAgent Network
 
 <p align="center">
 <a href="https://aiws.eth.limo">AIWS ENS AI Launcher</a><br>
@@ -7,13 +7,13 @@
 
 ![Banner Animation](./assets/BannerAni.gif)
 
-Welcome to AIWS, a modular network for generating and managing autonomous AI agents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
+Welcome to AIWS, a modular network for generating and managing DeAgents fully built on decentralized stacks, including IPFS, Filecoin, Solana, Ethereum, ENS, SNS, Glitter, etc. 
 
 ## Key Features
 
 - 🔍 On-Chain Real-Time Transparency
 - 🛠️ Serverless & Unstoppable Architecture  
-- 🆔 Cross-Chain Agent DID
+- 🆔 Cross-Chain DeAgent DID
 - 🌐 Permissionless Access
 - 🧠 Interoperable Swarm Intelligence
 
@@ -28,7 +28,7 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 |                                   User                                       |
 +------------------------------------------------------------------------------+
 |                                  Client                                      |
-|       🌐 Web      ✖ DApps      🎮 Games      📸 Social Media      📱 Apps     |
+|       🌐 Web      ✖ DApps      🎮 Games      📸 Social Media      📱 Apps   |
 +------------------------------------------------------------------------------+
 |                     Universal Communication Layer                            |
 |    Enables interaction between components across layers and cross-chain DID  |
@@ -36,7 +36,7 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 +------------------------------------------------------------------------------+
 |                                    DID                                       |
 |              .eth        .sol        .sui           .bnb                     |
-|              🦄           🔥           📦             🟦                      |
+|              🦄           🔥           📦             🟦                    |
 +------------------------------------------------------------------------------+
 |                               IPFS + Filecoin                                |
 |  Agent Metadata and Memory                  +--------------------------------+
@@ -48,20 +48,20 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 |                                             +--------------------------------+
 +------------------------------------------------------------------------------+
 |                                   Models                                     |
-|       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini                |
+|       🌞 OpenAI       🌀 Llama       🧠 Claude       ♾️ Gemini              |
 |                                                                              |
 +------------------------------------------------------------------------------+
 ```
 
 ## Core Features
 
-### AI Agent Generation
-- Generate AI agents via official page (e.g., `AIWS.eth`)
+### DeAgent Generation
+- Generate DeAgent via official page (e.g., `AIWS.eth`)
 - Submit metadata (avatar, persona, description, ENS bindings)
-- Host agents on IPFS with verifiable hash
+- Host DeAgents on IPFS with verifiable hash
 
 ### Communication Protocol
-- Agent communication via unique DID (`.eth`, `.sol`, `.sui`)
+- DeAgent communication via unique DID (`.eth`, `.sol`, `.sui`)
 - Cross-chain interoperability through DID references
 
 ### Data Storage
@@ -76,13 +76,13 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 
 ### 1. User Interface (UI)
 - Frontend: React/Next.js based
-- Interactive forms for agent deployment
+- Interactive forms for DeAgent deployment
 
 ### 2. DID Layer
 - DID-IPFS hash binding via signatures
 - Multi-chain extension support
 
-### 3. Agent Metadata Layer
+### 3. DeAgent Metadata Layer
 ```json
 {
   "name": "AgentName",
@@ -116,7 +116,7 @@ Welcome to AIWS, a modular network for generating and managing autonomous AI age
 
 ## Implementation Details
 
-### Agent Generation Process
+### DeAgent Generation Process
 ```
 +-------------+            +------------+             +------------+
 | User Input  | --(JSON)-> | IPFS Node  | --(CID)---> | ENS Update |
