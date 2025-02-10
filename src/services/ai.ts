@@ -4,6 +4,7 @@
 
 import OpenAI from "openai";
 import { decryptApiKey } from "@/utils";
+import Cookies from "js-cookie";
 
 /**
  * Declare global window.aiData type
@@ -61,9 +62,12 @@ const removeQuotes = (text: string): string => {
  */
 export const sendMessage = async (message: string) => {
   try {
-    const apiKey = API_KEY;
-    if (!apiKey) {
-      throw new Error("No valid API key available");
+    // Get token from cookies
+    const token = Cookies.get("token");
+    if (!token) {
+      //throw new Error("No valid token available. Please connect your wallet.");
+      console.error("No valid token available. Please connect your wallet.");
+      return "No valid token available. Please connect your wallet."
     }
 
     // Get current conversation history
@@ -75,25 +79,35 @@ export const sendMessage = async (message: string) => {
         role: "system",
         content: window.aiData.behaviorDesc,
       });
+      
     }
 
     history.push({ role: "user", content: message });
 
-    // Call API to get response
-    const completion = await openai.chat.completions.create({
-      model: "openai/gpt-3.5-turbo",
-      messages: history,
-      temperature: 0.7,
-      max_tokens: 1000,
+    // Call backend API to get response https://irobot.run http://127.0.0.1:5013
+    const response = await fetch("https://irobot.run/message", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: message,
+        token: token,
+      }),
     });
 
-    const response = completion.choices?.[0]?.message?.content;
-    if (!response) {
-      throw new Error("Invalid response from AI");
+    const data = await response.json();
+
+    const aiResponse = data.content;
+
+    if (!aiResponse) {
+      
+      console.error("Invalid response from AI");
+      return "Sorry, invalid response from AI. Please try again later."
     }
 
     // Remove quotes from response
-    const cleanResponse = removeQuotes(response);
+    const cleanResponse = removeQuotes(aiResponse);
     history.push({ role: "assistant", content: cleanResponse });
 
     // Update conversation history

@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * AI Agent Chat Interface Component
- * Provides a chat interface for interacting with AI agents
- */
-
 import { Bubble, Sender, useXAgent, useXChat } from "@ant-design/x";
 import { Avatar, Button, Modal, Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
@@ -13,10 +7,12 @@ import type { GetProp } from "antd";
 import { sendMessage, getCurrentHistory } from "@/services/ai";
 import chatIcon from "@/assets/images/chat.png";
 import ReactMarkdown from "react-markdown";
+import Web3Modal from "web3modal";
+import { ethers } from "ethers";
+import Cookies from "js-cookie";
 
 // Default avatar URL for the AI agent
-const AVATAR_URL =
-  "https://ipfs.glitterprotocol.dev/ipfs/QmXHZS7nbVpsbe9iDurjUXEHeQ15txUdscukwh6gBopds9";
+const AVATAR_URL = "https://ipfs.glitterprotocol.dev/ipfs/QmXHZS7nbVpsbe9iDurjUXEHeQ15txUdscukwh6gBopds9";
 
 // Default configuration for AI Assistant
 const DEFAULT_CONFIG = {
@@ -58,12 +54,11 @@ const roles: GetProp<typeof Bubble.List, "roles"> = {
 
 type MessageType = GetProp<typeof Bubble.List, "items">[number];
 
-/**
- * Independent AI Agent Chat Component
- */
 const Independent: React.FC = () => {
-  const [content, setContent] = React.useState("");
+  const [content, setContent] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   // Initialize AI agent with message handling
   const [agent] = useXAgent({
@@ -78,44 +73,142 @@ const Independent: React.FC = () => {
     },
   });
 
-  // Get agent configuration
-  const { avatar, name, functionDesc } = window?.aiData || DEFAULT_CONFIG;
-
   // Initialize chat with agent
   const { onRequest, messages, setMessages } = useXChat({ agent });
 
-  // Load conversation history
-  useEffect(() => {
-    const loadHistory = async () => {
-      const history = getCurrentHistory();
-      if (history?.length === 0) {
-        const updatedHistory = getCurrentHistory();
-        const historyMessages = updatedHistory.map(
-          (msg, index) =>
-            ({
-              id: `${index}`,
-              message: msg.content,
-              status: msg.role === "user" ? "local" : "success",
-              role: msg.role === "user" ? "local" : "ai",
-            } as MessageType)
-        );
-        setMessages(historyMessages as any);
-      } else {
-        const historyMessages = history.map(
-          (msg, index) =>
-            ({
-              id: `${index}`,
-              message: msg.content,
-              status: msg.role === "user" ? "local" : "success",
-              role: msg.role === "user" ? "local" : "ai",
-            } as MessageType)
-        );
-        setMessages(historyMessages as any);
-      }
-    };
+  // Helper function to add system message to the chat
+  const addSystemMessage = (message: string) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: `${Date.now()}`, message, status: "success", role: "ai" },
+    ]);
+  };
 
-    loadHistory();
-  }, [setMessages]);
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (token) {
+      console.log("User is already logged in");
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const getInviteId = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("invite") || "0";
+  };
+// 添加切换到 BSC 链的函数
+const switchToBSCChain = async (provider: any) => {
+  try {
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x38' }], // BSC Mainnet chainId
+    });
+  } catch (switchError: any) {
+    // 如果用户没有添加 BSC 网络，则添加
+    if (switchError.code === 4902) {
+      try {
+        await provider.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x38',
+            chainName: 'Binance Smart Chain',
+            nativeCurrency: {
+              name: 'BNB',
+              symbol: 'BNB',
+              decimals: 18
+            },
+            rpcUrls: ['https://bsc-dataseed1.binance.org'],
+            blockExplorerUrls: ['https://bscscan.com']
+          }]
+        });
+      } catch (addError) {
+        console.error('Error adding BSC chain:', addError);
+      }
+    }
+  }
+};
+  // Handle wallet connection and token generation
+  const handleWalletConnect = async () => {
+    try {
+      const web3Modal = new Web3Modal();
+      const connection = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(connection);
+      await switchToBSCChain(connection);
+
+      const signer = provider.getSigner();
+      const walletAddress = await signer.getAddress();
+      const inviteId = getInviteId();
+
+      setWalletAddress(walletAddress);
+
+      // Avoid sending requests if already logged in
+      if (isLoggedIn) {
+        console.log("Already logged in. Skipping request to backend.");
+        return;
+      }
+
+      // Send POST request to the backend
+      const response = await fetch("https://irobot.run/connect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ walletAddress, inviteId }),
+      });
+
+      if (!response.ok) {
+        setIsLoggedIn(false);
+        addSystemMessage("Not connect the server, please try again.");
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const token = data.token;
+      const introduce = data.introduce;
+
+      if (!token) {
+        setIsLoggedIn(false);
+        addSystemMessage("Not connect the server, please try again.");
+        throw new Error("No token received from backend.");
+      }
+
+      // Store wallet address and token in cookies
+      Cookies.set("walletAddress", walletAddress, { expires: 180 });
+      Cookies.set("token", token, { expires: 180 });
+
+      console.log("Wallet connected and token stored successfully!");
+      setIsLoggedIn(true);
+
+      // If introduce is not empty, display it in the chat
+      if (introduce && introduce.trim() !== "") {
+        addSystemMessage(introduce);
+      }
+    } catch (error) {
+      setIsLoggedIn(false);
+      addSystemMessage("Not connect the server, please try again.");
+      console.error("Error connecting wallet:", error);
+    }
+  };
+  const handleWalletDisconnect = async () => {
+    try {
+      Cookies.remove("walletAddress");
+      Cookies.remove("token");
+      setIsLoggedIn(false);
+      setWalletAddress(null);
+      console.log("Wallet disconnected, cookies cleared.");
+      const web3Modal = new Web3Modal();
+      web3Modal.clearCachedProvider();
+      if (window.ethereum && window.ethereum.disconnect) {
+        await window.ethereum.disconnect();
+      }
+      console.log("Wallet disconnected successfully");
+
+    } catch (error) {
+      console.error("Error disconnecting wallet:", error);
+    }
+  };
+  const { avatar, name, functionDesc } = window?.aiData || DEFAULT_CONFIG;
 
   // Handle message submission
   const onSubmit = (nextContent: string) => {
@@ -135,32 +228,19 @@ const Independent: React.FC = () => {
             <p className="agent-desc">{functionDesc}</p>
           </Tooltip>
         </div>
-        <Button
-          type="primary"
-          className="agent-details-btn"
-          icon={<InfoCircleOutlined />}
-          onClick={() => setIsModalOpen(true)}
+        <div className="wallet-actions">
+        <Button 
+          className="agent-details-btn" 
+          onClick={walletAddress ? handleWalletDisconnect : handleWalletConnect}
         >
-          View Details
+          {walletAddress 
+            ? `Disconnect: ${walletAddress.slice(0, 2)}...${walletAddress.slice(-3)}` 
+            : "Connect MetaMask"}
         </Button>
+      </div>
       </div>
     </div>
   );
-
-  //
-  const CustomBubble = ({ content }: { content: string }) => (
-    <div className="markdown-content">
-      <ReactMarkdown>{content}</ReactMarkdown>
-    </div>
-  );
-
-  // Convert messages to bubble list items
-  const items = messages.map(({ id, message, status }) => ({
-    key: id,
-    loading: status === "loading",
-    role: status === "local" ? "local" : "ai",
-    content: <CustomBubble content={message} />,
-  }));
 
   return (
     <div className="ai-agent-container">
@@ -174,7 +254,12 @@ const Independent: React.FC = () => {
           </div>
         </section>
         <div className="chat-main">
-          <Bubble.List items={items} roles={roles} className="messages" />
+          <Bubble.List items={messages.map(({ id, message, status }) => ({
+            key: id,
+            loading: status === "loading",
+            role: status === "local" ? "local" : "ai",
+            content: <div className="markdown-content"><ReactMarkdown>{message}</ReactMarkdown></div>,
+          }))} roles={roles} className="messages" />
           <Sender
             value={content}
             onSubmit={onSubmit}
@@ -185,34 +270,6 @@ const Independent: React.FC = () => {
           />
         </div>
       </div>
-
-      <Modal
-        title="AI Agent Details"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={600}
-        centered
-      >
-        <div className="agent-details-modal">
-          <div className="avatar-section">
-            <Avatar src={window.aiData?.avatar || AVATAR_URL} size={100} />
-            <h3 className="agent-name">{window.aiData?.name || "N/A"}</h3>
-          </div>
-          <div className="detail-item">
-            <h4>Agent Intro:</h4>
-            <p>{window.aiData?.functionDesc || "N/A"}</p>
-          </div>
-          <div className="detail-item">
-            <h4>Agent Description Prompt:</h4>
-            <p>{window.aiData?.behaviorDesc || "N/A"}</p>
-          </div>
-          <div className="detail-item">
-            <h4>DID:</h4>
-            <p>{window.aiData?.did || "N/A"}</p>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

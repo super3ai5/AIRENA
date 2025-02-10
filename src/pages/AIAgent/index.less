@@ -1,19 +1,24 @@
 .ai-agent-container {
-  height: 100vh;
-  padding-top: 48px;
-  background-image: url("../../assets/images/background.jpg");
-  background-size: contain;
+  height: 120vh;
+  padding-top: 30px;
+  //background-image: url('https://ipfs.io/ipfs/bafybeiehm7xoxskcuahlfwufmt5mln5ypgfb2qk5g5sphfocichafelvja');
+  background-size: cover;
+  background-position: center;
   background-repeat: no-repeat;
-  font-family: "NexaText-Regular";
+  //background: linear-gradient(135deg, #1a2b3c, #0f1b2a);
+  font-family: "Inter", "NexaText-Regular", sans-serif;
   overflow: hidden;
+  color: #e0e6ed;
 
   .ant-bubble-content,
   .ant-input {
-    color: #333333 !important;
+    color: #e0e6ed !important;
+    background: rgba(30, 41, 59, 0.7) !important;
+    border: 1px solid rgba(71, 85, 105, 0.3);
   }
 
   .agent-header {
-    margin-bottom: 24px;
+    margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -23,10 +28,26 @@
       width: 100%;
       align-items: center;
       gap: 16px;
-
+      .wallet-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 5px; 
+        align-items: left; 
+        margin-top: 1px;
+      }
       .agent-details-btn {
-        margin-left: auto;
-        color: #fff;
+        width: 140px;
+        padding: 4px 4px; 
+        margin: 2px 2px;
+        background: rgba(59, 130, 246, 1);
+        color: #f6f7f8;
+        border: 1px solid rgba(59, 130, 246, 1);
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(59, 130, 246, 0.3);
+          border-color: rgba(59, 130, 246, 0.5);
+        }
       }
 
       .agent-avatar {
@@ -34,15 +55,18 @@
         height: 132px;
         border-radius: 24px;
         object-fit: cover;
+        border: 2px solid rgba(71, 85, 105, 0.5);
       }
 
       .agent-details {
         flex: 1;
+        height: 150px;
+        overflow: auto;
         .agent-name {
           margin: 0;
           font-size: 20px;
-          font-family: "NexaText-Bold";
-          color: #333333;
+          font-family: "Inter", "NexaText-Bold", sans-serif;
+          color: #e0e6ed;
           font-weight: 600;
           white-space: nowrap;
           overflow: hidden;
@@ -52,30 +76,15 @@
 
         .agent-desc {
           margin: 4px 0 0;
-          color: #666;
+          color: #e0e6ed;
           width: 100%;
           font-size: 14px;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          line-height: 1.5;
+          line-height: 1.6;
+          overflow: auto;
+          max-height: 150px;
+          white-space: pre-wrap; 
+          word-break: break-word; 
         }
-      }
-    }
-
-    .chat-tag {
-      background: #f0f2f5;
-      padding: 8px 16px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-
-      .chat-icon {
-        font-size: 16px;
       }
     }
   }
@@ -83,40 +92,51 @@
   .chat-container {
     display: flex;
     width: 1036px;
-    height: calc(100vh - 96px);
-    padding: 24px;
-    background: #f5f7fb;
+    height: calc(100vh - 64px);
+    padding: 12px;
+    background: rgba(17, 24, 39, 0.7);
     border-radius: 32px;
+    border: 1px solid rgba(71, 85, 105, 0.3);
     flex-direction: column;
     margin: 0 auto;
+    margin-top: -20px; 
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
 
     .chat-section {
       .divider {
         width: 100%;
         height: 1px;
-        background: #ced6e5;
+        background: rgba(71, 85, 105, 0.3);
       }
       .chat-title {
-        margin: 24px 0 16px;
+        margin: 6px 0 8px;
         display: flex;
-        font-family: "NexaText-Bold";
+        font-family: "Inter", "NexaText-Bold", sans-serif;
         align-items: center;
         gap: 8px;
         font-size: 16px;
         font-weight: 600;
+        color: #94a3b8;
       }
     }
 
     .chat-main {
       flex: 1;
-      background: white;
+      background: rgba(30, 41, 59, 0.5);
       border-radius: 16px;
-      max-height: calc(100% - 216px);
+      border: 1px solid rgba(71, 85, 105, 0.2);
+      //max-height: calc(100% - 216px);
+      max-height: 70vh; 
+
       display: flex;
       flex-direction: column;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
 
       .messages {
+        white-space: pre-wrap; 
+        word-wrap: break-word; 
         flex: 1;
         padding: 20px;
         overflow-y: auto;
@@ -127,21 +147,36 @@
         }
 
         &::-webkit-scrollbar-track {
-          background: #f1f1f1;
+          background: rgba(71, 85, 105, 0.2);
           border-radius: 3px;
         }
 
         &::-webkit-scrollbar-thumb {
-          background: #888;
+          background: rgba(99, 102, 241, 0.5);
           border-radius: 3px;
 
           &:hover {
-            background: #555;
+            background: rgba(99, 102, 241, 0.7);
           }
         }
       }
 
       .sender {
+        .ant-input {
+          color: white !important;
+          &::placeholder {
+            color: rgba(255,255,255,0.6) !important;
+          }
+          height: 40px; 
+          padding: 8px 12px; 
+          font-size: 16px; 
+          border-radius: 8px; 
+          border: 1px solid rgba(71, 85, 105, 0.5); 
+          background-color: rgba(255, 255, 255, 0.1); 
+          color: #e0e6ed !important;
+          resize: none;
+          overflow-y: auto;
+        }
         margin: 0 20px 20px 20px;
         width: calc(100% - 40px);
       }
@@ -149,21 +184,29 @@
   }
 
   .ant-bubble-content {
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    white-space: pre-wrap; 
+    word-wrap: break-word;
+    background: rgba(30, 41, 59, 0.7);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    color: #e0e6ed;
 
     pre {
-      background: #f6f8fa;
+      background: rgba(17, 24, 39, 0.5);
       padding: 8px;
       border-radius: 6px;
+      border: 1px solid rgba(71, 85, 105, 0.2);
       margin: 8px 0;
+      color: #94a3b8;
     }
 
     code {
-      background: #f6f8fa;
+      background: rgba(17, 24, 39, 0.5);
       padding: 2px 6px;
       border-radius: 4px;
+      border: 1px solid rgba(71, 85, 105, 0.2);
       margin: 8px 0;
+      color: #4299e1;
     }
   }
 }
@@ -175,16 +218,19 @@
 }
 
 .markdown-content {
-  ol,
-  ul {
+  color: #e0e6ed;
+  
+  ol, ul {
     padding-left: 1em;
     list-style-type: none;
     margin: 0;
+    
     li {
       counter-increment: list;
       position: relative;
       padding-left: 0.5em;
       margin-bottom: 0.5em;
+      color: #94a3b8;
     }
   }
 
@@ -194,47 +240,56 @@
     left: -1.5em;
     width: 1.5em;
     text-align: right;
+    color: #4299e1;
   }
+
   ul li::before {
     content: "•";
     position: absolute;
     left: -1.5em;
     width: 1.5em;
     text-align: right;
+    color: #4299e1;
   }
 }
 
 .agent-details-modal {
   max-height: 600px;
   overflow: auto;
+  background: #1a2b3c;
+  color: #e0e6ed;
+
   .avatar-section {
     text-align: center;
     margin-bottom: 24px;
 
     .ant-avatar {
       margin-bottom: 12px;
+      border: 2px solid rgba(71, 85, 105, 0.5);
     }
 
     .agent-name {
       margin: 0;
       font-size: 18px;
-      color: #333;
+      color: #e0e6ed;
       font-weight: 600;
     }
   }
 
   .detail-item {
     margin-bottom: 16px;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.2);
+    padding-bottom: 12px;
 
     h4 {
       margin: 0 0 4px;
-      color: #333;
+      color: #94a3b8;
       font-weight: 500;
     }
 
     p {
       margin: 0;
-      color: #666;
+      color: #e0e6ed;
       word-break: break-all;
     }
   }
