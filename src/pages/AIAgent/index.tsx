@@ -57,8 +57,8 @@ type MessageType = GetProp<typeof Bubble.List, "items">[number];
 const Independent: React.FC = () => {
   const [content, setContent] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!Cookies.get("token"));
+  const [walletAddress, setWalletAddress] = useState<string | null>(Cookies.get("walletAddress") || null);
 
   // Initialize AI agent with message handling
   const [agent] = useXAgent({
@@ -86,11 +86,32 @@ const Independent: React.FC = () => {
 
   // Check if user is already logged in
   useEffect(() => {
-    const token = Cookies.get("token");
-    if (token) {
-      console.log("User is already logged in");
-      setIsLoggedIn(true);
-    }
+    const checkLoginState = () => {
+      const token = Cookies.get("token");
+      const savedWalletAddress = Cookies.get("walletAddress");
+
+      if (token && savedWalletAddress) {
+        setIsLoggedIn(true);
+        setWalletAddress(savedWalletAddress);
+        console.log("Restored login state:", { token, savedWalletAddress });
+      } else {
+        setIsLoggedIn(false);
+        setWalletAddress(null);
+        console.log("No valid login state found");
+      }
+    };
+
+    // Check on mount
+    checkLoginState();
+
+    // Add event listener for window focus
+    window.addEventListener('focus', checkLoginState);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', checkLoginState);
+    };
+
   }, []);
 
   const getInviteId = () => {
@@ -217,6 +238,8 @@ const switchToBSCChain = async (provider: any) => {
     setContent("");
   };
 
+
+
   // Header component
   const headerNode = (
     <div className="agent-header">
@@ -233,7 +256,7 @@ const switchToBSCChain = async (provider: any) => {
           className="agent-details-btn" 
           onClick={walletAddress ? handleWalletDisconnect : handleWalletConnect}
         >
-          {walletAddress 
+          {isLoggedIn &&   walletAddress 
             ? `Disconnect: ${walletAddress.slice(0, 2)}...${walletAddress.slice(-3)}` 
             : "Connect MetaMask"}
         </Button>
