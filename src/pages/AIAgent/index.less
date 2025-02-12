@@ -8,7 +8,7 @@
   //background: linear-gradient(135deg, #1a2b3c, #0f1b2a);
   font-family: "Inter", "NexaText-Regular", sans-serif;
   overflow: hidden;
-  color: #e0e6ed;
+  background-color: #000000;
 
   .ant-bubble-content,
   .ant-input {
@@ -91,7 +91,8 @@
 
   .chat-container {
     display: flex;
-    width: 1036px;
+    //width: 1036px;
+    width:90%;
     height: calc(100vh - 64px);
     padding: 12px;
     background: rgba(17, 24, 39, 0.7);
@@ -102,7 +103,73 @@
     margin-top: -20px; 
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
+  }
+  /* 小屏幕样式 */
+  @media (max-width: 768px) {
+    .ai-agent-container {
+      padding-top: 20px;
+    }
 
+    .chat-container {
+      width: 100%;
+      height: calc(100vh - 80px);
+      padding: 8px;
+    }
+
+    .agent-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .agent-name {
+      font-size: 18px; /* 调整字体大小 */
+    }
+
+    .agent-desc {
+      font-size: 12px; /* 调整字体大小 */
+      max-height: none; /* 取消最大高度 */
+    }
+
+    .agent-details-btn {
+      width: 100%; /* 按钮宽度调整 */
+      padding: 8px;
+    }
+
+    .wallet-actions {
+      width: 100%;
+      margin-top: 8px;
+    }
+  }
+
+  /* 更小屏幕样式 */
+  @media (max-width: 480px) {
+    .agent-name {
+      font-size: 16px;
+    }
+
+    .agent-desc {
+      font-size: 12px;
+    }
+
+    .agent-avatar {
+      width: 100px;
+      height: 100px;
+    }
+
+    .chat-container {
+      padding: 4px;
+    }
+
+    .sender {
+      margin: 0 10px 20px 10px;
+    }
+
+    .ant-input {
+      height: 35px; /* 输入框大小调整 */
+      font-size: 14px;
+    }
+  }
     .chat-section {
       .divider {
         width: 100%;
@@ -181,7 +248,7 @@
         width: calc(100% - 40px);
       }
     }
-  }
+  
 
   .ant-bubble-content {
     white-space: pre-wrap; 
@@ -219,6 +286,9 @@
 
 .markdown-content {
   color: #e0e6ed;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   
   ol, ul {
     padding-left: 1em;
@@ -294,3 +364,4 @@
     }
   }
 }
+

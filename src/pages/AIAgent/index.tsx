@@ -246,7 +246,13 @@ const switchToBSCChain = async (provider: any) => {
       <div className="agent-info">
         <Avatar src={avatar} size={132} />
         <div className="agent-details">
-          <h2 className="agent-name">{name}</h2>
+          <h2 className="agent-name">{name}
+          <span style={{ marginLeft: '8px' }}>
+            <a href="https://medium.com/@AIRENA3/airena-whitepaper-the-immortal-ai-agent-ecosystem-built-on-bnbchain-and-ipfs-27124e2d4d2e" target="_blank" rel="noopener noreferrer" style={{ color: '#4299e1', textDecoration: 'none' }}>
+              Whitepaper
+            </a>
+          </span>
+          </h2>
           <Tooltip title={functionDesc}>
             <p className="agent-desc">{functionDesc}</p>
           </Tooltip>
